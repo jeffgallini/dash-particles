@@ -2,6 +2,7 @@ import dash
 from dash import html, dcc, callback, Input, Output, State, ALL
 import dash_particles
 import json
+import pprint  # Added for exporting config
 
 app = dash.Dash(__name__)
 
@@ -252,8 +253,9 @@ color_options = [
 ]
 
 app.layout = html.Div([
-    html.H1("Dash Particles Demo", style={"textAlign": "center", "marginBottom": "20px", "position": "relative", "zIndex": 10}),
-    
+    html.H1("Dash Particles Demo",
+            style={"textAlign": "center", "marginBottom": "20px", "position": "relative", "zIndex": 10}),
+
     # Main content container with particles and controls
     html.Div([
         # Left side - Particles container
@@ -267,7 +269,7 @@ app.layout = html.Div([
                 "bottom": 0,
                 "zIndex": 1  # Low z-index to be behind other elements
             }),
-            
+
             # Dropdown overlay
             html.Div([
                 dcc.Dropdown(
@@ -293,10 +295,10 @@ app.layout = html.Div([
                 "left": "20px",
                 "zIndex": 10,  # Higher z-index to appear above particles
             }),
-            
+
             # Description overlay
             html.Div(
-                id="description", 
+                id="description",
                 style={
                     "position": "relative",
                     "bottom": "-500px",  # Position at the bottom
@@ -318,11 +320,11 @@ app.layout = html.Div([
             "marginRight": "20px",
             "overflow": "hidden"  # Ensure particles don't overflow
         }),
-        
+
         # Right side - Controls
         html.Div([
             html.H3("Customize Particles", style={"marginTop": "0", "marginBottom": "20px"}),
-            
+
             # Background settings
             html.Div([
                 html.H4("Background", style={"marginBottom": "10px"}),
@@ -334,11 +336,11 @@ app.layout = html.Div([
                     clearable=False
                 ),
             ], style={"marginBottom": "20px"}),
-            
+
             # Particle settings
             html.Div([
                 html.H4("Particles", style={"marginBottom": "10px"}),
-                
+
                 html.Label("Particle Color"),
                 dcc.Dropdown(
                     id={"type": "particle-control", "param": "particles.color.value"},
@@ -346,7 +348,7 @@ app.layout = html.Div([
                     value="#000000",
                     clearable=False
                 ),
-                
+
                 html.Label("Number of Particles", style={"marginTop": "10px"}),
                 dcc.Slider(
                     id={"type": "particle-control", "param": "particles.number.value"},
@@ -356,7 +358,7 @@ app.layout = html.Div([
                     value=50,
                     marks={10: "10", 150: "150", 300: "300"},
                 ),
-                
+
                 html.Label("Particle Size", style={"marginTop": "10px"}),
                 dcc.Slider(
                     id={"type": "particle-control", "param": "particles.size.value"},
@@ -366,7 +368,7 @@ app.layout = html.Div([
                     value=5,
                     marks={1: "1", 10: "10", 20: "20"},
                 ),
-                
+
                 html.Label("Opacity", style={"marginTop": "10px"}),
                 dcc.Slider(
                     id={"type": "particle-control", "param": "particles.opacity.value"},
@@ -377,11 +379,11 @@ app.layout = html.Div([
                     marks={0.1: "0.1", 0.5: "0.5", 1: "1"},
                 ),
             ], style={"marginBottom": "20px"}),
-            
+
             # Links settings
             html.Div([
                 html.H4("Links", style={"marginBottom": "10px"}),
-                
+
                 html.Label("Enable Links"),
                 dcc.RadioItems(
                     id={"type": "particle-control", "param": "particles.links.enable"},
@@ -392,7 +394,7 @@ app.layout = html.Div([
                     value=True,
                     inline=True
                 ),
-                
+
                 html.Div(id="links-controls", children=[
                     html.Label("Link Color", style={"marginTop": "10px"}),
                     dcc.Dropdown(
@@ -401,7 +403,7 @@ app.layout = html.Div([
                         value="#000000",
                         clearable=False
                     ),
-                    
+
                     html.Label("Link Width", style={"marginTop": "10px"}),
                     dcc.Slider(
                         id={"type": "particle-control", "param": "particles.links.width"},
@@ -411,7 +413,7 @@ app.layout = html.Div([
                         value=2,
                         marks={1: "1", 3: "3", 5: "5"},
                     ),
-                    
+
                     html.Label("Link Opacity", style={"marginTop": "10px"}),
                     dcc.Slider(
                         id={"type": "particle-control", "param": "particles.links.opacity"},
@@ -423,11 +425,11 @@ app.layout = html.Div([
                     ),
                 ]),
             ], style={"marginBottom": "20px"}),
-            
+
             # Movement settings
             html.Div([
                 html.H4("Movement", style={"marginBottom": "10px"}),
-                
+
                 html.Label("Enable Movement"),
                 dcc.RadioItems(
                     id={"type": "particle-control", "param": "particles.move.enable"},
@@ -438,7 +440,7 @@ app.layout = html.Div([
                     value=True,
                     inline=True
                 ),
-                
+
                 html.Div(id="movement-controls", children=[
                     html.Label("Speed", style={"marginTop": "10px"}),
                     dcc.Slider(
@@ -449,7 +451,7 @@ app.layout = html.Div([
                         value=3,
                         marks={1: "1", 5: "5", 10: "10"},
                     ),
-                    
+
                     html.Label("Direction", style={"marginTop": "10px"}),
                     dcc.Dropdown(
                         id={"type": "particle-control", "param": "particles.move.direction"},
@@ -465,11 +467,11 @@ app.layout = html.Div([
                     ),
                 ]),
             ], style={"marginBottom": "20px"}),
-            
+
             # Interactivity settings
             html.Div([
                 html.H4("Interactivity", style={"marginBottom": "10px"}),
-                
+
                 html.Label("Hover Effect"),
                 dcc.Dropdown(
                     id={"type": "particle-control", "param": "interactivity.events.onHover.mode"},
@@ -483,7 +485,7 @@ app.layout = html.Div([
                     value="repulse",
                     clearable=False
                 ),
-                
+
                 html.Label("Click Effect", style={"marginTop": "10px"}),
                 dcc.Dropdown(
                     id={"type": "particle-control", "param": "interactivity.events.onClick.mode"},
@@ -498,37 +500,44 @@ app.layout = html.Div([
                     clearable=False
                 ),
             ]),
-            
-            # Apply button
-            html.Button("Apply Changes", id="apply-changes", n_clicks=0, 
-                        style={
-                            "marginTop": "20px",
-                            "padding": "10px 20px",
-                            "backgroundColor": "#4CAF50",
-                            "color": "white",
-                            "border": "none",
-                            "borderRadius": "5px",
-                            "cursor": "pointer",
-                            "fontSize": "16px"
-                        }),
-            
-            # Reset button
-            html.Button("Reset", id="reset-controls", n_clicks=0,
-                        style={
-                            "marginTop": "10px",
-                            "marginLeft": "10px",
-                            "padding": "10px 20px",
-                            "backgroundColor": "#f44336",
-                            "color": "white",
-                            "border": "none",
-                            "borderRadius": "5px",
-                            "cursor": "pointer",
-                            "fontSize": "16px"
-                        }),
-            
+
+            # Button container
+            html.Div([
+                html.Button("Apply Changes", id="apply-changes", n_clicks=0,
+                            style={
+                                "padding": "10px 20px", "backgroundColor": "#4CAF50", "color": "white",
+                                "border": "none", "borderRadius": "5px", "cursor": "pointer",
+                                "fontSize": "16px", "marginRight": "10px"
+                            }),
+                html.Button("Reset", id="reset-controls", n_clicks=0,
+                            style={
+                                "padding": "10px 20px", "backgroundColor": "#f44336", "color": "white",
+                                "border": "none", "borderRadius": "5px", "cursor": "pointer",
+                                "fontSize": "16px", "marginRight": "10px"
+                            }),
+                html.Button("Export Config", id="export-config-button", n_clicks=0,
+                            style={
+                                "padding": "10px 20px", "backgroundColor": "#2196F3", "color": "white",
+                                "border": "none", "borderRadius": "5px", "cursor": "pointer",
+                                "fontSize": "16px"
+                            }),
+            ], style={"marginTop": "20px", "display": "flex", "flexWrap": "wrap"}),
+
+            # Exported code display area
+            html.Div(id="export-output-container", style={"display": "none", "marginTop": "20px"}, children=[
+                html.H4("Exported Component Code"),
+                dcc.Textarea(
+                    id="export-code-output",
+                    readOnly=True,
+                    style={"width": "100%", "height": "300px", "fontFamily": "monospace", "fontSize": "12px",
+                           "border": "1px solid #ccc", "padding": "10px"},
+                    placeholder="Click 'Export Config' to generate the code..."
+                )
+            ]),
+
             # Store for current configuration
             dcc.Store(id="current-config", data=particle_configs["default"]),
-            
+
         ], style={
             "width": "35%",
             "padding": "20px",
@@ -551,6 +560,7 @@ app.layout = html.Div([
     "minHeight": "100vh"
 })
 
+
 # Callback to update links controls visibility
 @callback(
     Output("links-controls", "style"),
@@ -562,6 +572,7 @@ def toggle_links_controls(enable_links):
     else:
         return {"display": "none"}
 
+
 # Callback to update movement controls visibility
 @callback(
     Output("movement-controls", "style"),
@@ -572,6 +583,7 @@ def toggle_movement_controls(enable_movement):
         return {"display": "block"}
     else:
         return {"display": "none"}
+
 
 # Initial load of particles
 @callback(
@@ -585,8 +597,9 @@ def initial_load(config):
         height="100%",
         width="100%",
     )
-    
+
     return particles
+
 
 # Callback to update description
 @callback(
@@ -604,6 +617,7 @@ def update_description(preset_name):
     }
     return descriptions[preset_name]
 
+
 # Callback to load preset configuration
 @callback(
     [Output("current-config", "data"),
@@ -613,7 +627,7 @@ def update_description(preset_name):
 )
 def load_preset(preset_name, control_ids):
     config = particle_configs[preset_name]
-    
+
     # Extract values for each control from the config
     control_values = []
     for control_id in control_ids:
@@ -626,8 +640,9 @@ def load_preset(preset_name, control_ids):
         except (KeyError, TypeError):
             # If path doesn't exist in config, use default value
             control_values.append(None)
-    
+
     return config, control_values
+
 
 # Callback to apply changes from controls
 @callback(
@@ -643,16 +658,16 @@ def apply_changes(n_clicks, control_ids, control_values, current_config):
     if n_clicks > 0:
         # Create a deep copy of the current config
         updated_config = json.loads(json.dumps(current_config))
-        
+
         # Update config with values from controls
         for i, control_id in enumerate(control_ids):
             param_path = control_id["param"].split(".")
             value = control_values[i]
-            
+
             # Skip if value is None
             if value is None:
                 continue
-                
+
             # Navigate to the right place in the config
             config_section = updated_config
             for j, key in enumerate(param_path):
@@ -664,7 +679,7 @@ def apply_changes(n_clicks, control_ids, control_values, current_config):
                     if key not in config_section:
                         config_section[key] = {}
                     config_section = config_section[key]
-        
+
         # Create a new DashParticles component with the updated configuration
         particles = dash_particles.DashParticles(
             id="particles-custom",
@@ -672,11 +687,12 @@ def apply_changes(n_clicks, control_ids, control_values, current_config):
             height="100%",
             width="100%",
         )
-        
+
         return particles, updated_config
-    
+
     # Default return if button not clicked
     return dash.no_update, dash.no_update
+
 
 # Callback to reset controls to current config
 @callback(
@@ -700,11 +716,77 @@ def reset_controls(n_clicks, current_config, control_ids):
             except (KeyError, TypeError):
                 # If path doesn't exist in config, use None
                 control_values.append(None)
-        
+
         return control_values
-    
+
     # Default return if button not clicked
     return dash.no_update
+
+
+# Callback to export configuration as code
+@callback(
+    Output("export-code-output", "value"),
+    Output("export-output-container", "style"),
+    Input("export-config-button", "n_clicks"),
+    State("current-config", "data"),
+    prevent_initial_call=True
+)
+def export_config_code(n_clicks, current_config_data):
+    if n_clicks > 0 and current_config_data:
+        # Format the dictionary string using pprint
+        # Use sort_dicts=False if Python version supports it and order is preferred
+        # (dict key order is preserved in Python 3.7+)
+        try:
+            config_py_str = pprint.pformat(current_config_data, indent=4, width=100, sort_dicts=False)
+        except TypeError:  # sort_dicts might not be available in older Python versions
+            config_py_str = pprint.pformat(current_config_data, indent=4, width=100)
+
+        exported_code = f"""
+# 1. Make sure to import dash_particles:
+# import dash_particles
+
+# 2. Here is the component code with your current configuration:
+
+your_particles_component = dash_particles.DashParticles(
+    id="particles-initial", # You can change this ID
+    options={config_py_str},
+    height="100%", # Adjust as needed
+    width="100%"   # Adjust as needed
+)
+
+# 3. You can then add 'your_particles_component' to your Dash app's layout.
+# For example:
+#
+# from dash import html # Assuming you use html.Div or similar
+#
+# # app.layout = html.Div([
+# #     html.H1("My Page with Particles"),
+# #     # If your page content needs to be above particles, ensure proper z-indexing
+# #     # and positioning. For a background effect, the particle container might
+# #     # need absolute positioning and a lower z-index.
+# #
+# #     # Example: Particles as a background for the whole page
+# #     html.Div(style={{
+# #         "position": "fixed", # Use "fixed" for viewport-relative positioning
+# #         "top": 0,
+# #         "left": 0,
+# #         "width": "100%",
+# #         "height": "100%",
+# #         "zIndex": -1 # Ensure it's behind other content
+# #     }}, children=[your_particles_component]),
+# #     
+# #     # Your foreground content (ensure it has a higher z-index or is in a new stacking context)
+# #     html.Div(style={{"position": "relative", "zIndex": 1}}, children=[
+# #         # html.H1("Content on top!"),
+# #         # ... your main page content ...
+# #     ])
+# # ])
+"""
+        return exported_code, {"display": "block", "marginTop": "20px"}
+
+    # If button not clicked or no data, keep textarea hidden and its content unchanged
+    return dash.no_update, {"display": "none", "marginTop": "20px"}
+
 
 if __name__ == '__main__':
     app.run(debug=True)
