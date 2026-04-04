@@ -1,118 +1,37 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-// Import the vanilla tsParticles
-import { tsParticles } from "tsparticles-engine";
-import { loadSlim } from "tsparticles-slim";
+import { tsParticles } from '@tsparticles/engine';
+import { loadFull } from 'tsparticles';
+import { loadCanvasMaskPlugin } from '@tsparticles/plugin-canvas-mask';
+import { loadExternalPopInteraction } from '@tsparticles/interaction-external-pop';
 
-/**
- * DashParticles is a Dash component that renders interactive particle animations.
- * This implementation uses vanilla tsParticles for better compatibility with Dash.
- */
-const DashParticles = ({
-    id,
-    options,
-    height = '400px',
-    width = '100%',
-    className,
-    style = {},
-    particlesLoaded = false,
-    setProps
-}) => {
-    const containerRef = useRef(null);
-    const initialized = useRef(false);
-    const particlesInstance = useRef(null);
-
-    useEffect(() => {
-        // Initialize tsParticles only once
-        if (!initialized.current) {
-            const initParticles = async () => {
-                try {
-                    // Initialize the engine
-                    await loadSlim(tsParticles);
-                    initialized.current = true;
-                    
-                    // Load the particles
-                    if (containerRef.current) {
-                        particlesInstance.current = await tsParticles.load({
-                            id: `${id}-particles`,
-                            element: containerRef.current,
-                            options: options || defaultOptions
-                        });
-                        
-                        if (setProps) {
-                            setProps({ particlesLoaded: true });
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error initializing particles:", error);
-                }
-            };
-            
-            initParticles();
-        }
-        
-        // Cleanup function
-        // return () => {
-        //     if (initialized.current) {
-        //         try {
-        //             // Use the tsParticles.destroy method with the container ID
-        //             // tsParticles.destroy(`${id}-particles`);
-        //             particlesInstance.current = null;
-        //         } catch (error) {
-        //             console.error("Error destroying particles:", error);
-        //         }
-        //     }
-        // };
-    }, [id, options, setProps]);
-
-    // Update particles if options change
-    useEffect(() => {
-        if (initialized.current && particlesInstance.current) {
-            particlesInstance.current.options.load(options || defaultOptions);
-        }
-    }, [options]);
-
-    const containerStyle = {
-        height,
-        width,
-        position: 'relative',
-        ...style
-    };
-
-    return (
-        <div 
-            id={id} 
-            ref={containerRef}
-            className={className} 
-            style={containerStyle}
-        />
-    );
-};
-
-// Default options that work well with Dash
 const defaultOptions = {
+    fullScreen: {
+        enable: false,
+        zIndex: 0,
+    },
     background: {
         color: {
-            value: "transparent",
+            value: 'transparent',
         },
     },
     fpsLimit: 60,
     particles: {
         color: {
-            value: "#0075FF",
+            value: '#0075FF',
         },
         links: {
-            color: "#0075FF",
+            color: '#0075FF',
             distance: 150,
             enable: true,
             opacity: 0.5,
             width: 1,
         },
         move: {
-            direction: "none",
+            direction: 'none',
             enable: true,
             outModes: {
-                default: "bounce",
+                default: 'bounce',
             },
             random: false,
             speed: 3,
@@ -129,7 +48,7 @@ const defaultOptions = {
             value: 0.5,
         },
         shape: {
-            type: "circle",
+            type: 'circle',
         },
         size: {
             value: { min: 1, max: 5 },
@@ -138,12 +57,157 @@ const defaultOptions = {
     detectRetina: true,
 };
 
-DashParticles.defaultProps = {
-    options: defaultOptions,
-    height: '400px',
-    width: '100%',
-    style: {},
-    particlesLoaded: false
+let runtimePromise;
+
+const ensureRuntimeLoaded = async () => {
+    if (!runtimePromise) {
+        // `loadFull` already includes the slim bundle. We register the
+        // official pop/canvas-mask plugins separately so manual
+        // `canvasMask` configs and `onClick.mode = "pop"` work in the
+        // bundled Dash runtime as well.
+        runtimePromise = (async () => {
+            await loadFull(tsParticles, false);
+            await loadExternalPopInteraction(tsParticles, false);
+            await loadCanvasMaskPlugin(tsParticles, false);
+        })();
+    }
+
+    await runtimePromise;
+};
+
+/**
+ * DashParticles renders a tsParticles canvas inside Dash.
+ *
+ * The package currently loads the `tsparticles` full runtime bundle plus the
+ * extra plugins needed for click-pop interactions, image shapes, text shapes,
+ * and canvas masks.
+ */
+const DashParticles = ({
+    id,
+    options,
+    height = '400px',
+    width = '100%',
+    className,
+    style = {},
+    particlesLoaded,
+    setProps
+}) => {
+    const containerRef = useRef(null);
+    const initialized = useRef(false);
+    const particlesInstance = useRef(null);
+    const reportedLoaded = useRef(null);
+    const setPropsRef = useRef(setProps);
+    const containerId = `${id || 'dash-particles'}-particles`;
+    const resolvedOptions = options ? {
+        ...options,
+        fullScreen: {
+            ...defaultOptions.fullScreen,
+            ...(options.fullScreen || {}),
+        },
+    } : defaultOptions;
+
+    useEffect(() => {
+        setPropsRef.current = setProps;
+    }, [setProps]);
+
+    const reportLoaded = (value) => {
+        if (!setPropsRef.current || reportedLoaded.current === value) {
+            return;
+        }
+
+        reportedLoaded.current = value;
+        setPropsRef.current({ particlesLoaded: value });
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const initParticles = async () => {
+            if (initialized.current || !containerRef.current) {
+                return;
+            }
+
+            try {
+                await ensureRuntimeLoaded();
+
+                if (cancelled || !containerRef.current) {
+                    return;
+                }
+
+                particlesInstance.current = await tsParticles.load({
+                    id: containerId,
+                    options: resolvedOptions,
+                });
+
+                initialized.current = true;
+                reportLoaded(true);
+            } catch (error) {
+                console.error('Error initializing particles:', error);
+                const containerNode = document.getElementById(containerId);
+                if (containerNode) {
+                    containerNode.textContent = 'Particles failed to initialize.';
+                    containerNode.style.color = '#ef4444';
+                    containerNode.style.padding = '12px';
+                }
+                reportLoaded(false);
+            }
+        };
+
+        initParticles();
+
+        return () => {
+            cancelled = true;
+
+            if (particlesInstance.current) {
+                try {
+                    particlesInstance.current.destroy();
+                } catch (error) {
+                    console.error('Error destroying particles:', error);
+                }
+            }
+
+            particlesInstance.current = null;
+            initialized.current = false;
+            reportLoaded(false);
+        };
+    }, [containerId]);
+
+    useEffect(() => {
+        const updateParticles = async () => {
+            if (!initialized.current || !particlesInstance.current) {
+                return;
+            }
+
+            try {
+                particlesInstance.current.options.load(resolvedOptions);
+                await particlesInstance.current.refresh();
+                reportLoaded(true);
+            } catch (error) {
+                console.error('Error updating particles:', error);
+                reportLoaded(false);
+            }
+        };
+
+        updateParticles();
+    }, [resolvedOptions]);
+
+    const containerStyle = {
+        height,
+        width,
+        position: 'relative',
+        ...style
+    };
+
+    return (
+        <div
+            id={id}
+            ref={containerRef}
+            className={className}
+            style={containerStyle}
+        >
+            <div id={containerId} style={{ height: '100%', width: '100%' }} />
+        </div>
+    );
 };
 
 DashParticles.propTypes = {
@@ -153,8 +217,12 @@ DashParticles.propTypes = {
     id: PropTypes.string,
 
     /**
-     * Configuration options for the particles.
-     * See https://particles.js.org for documentation on available options.
+     * tsParticles options for the canvas.
+     *
+     * This package currently ships with the `tsparticles` full bundle plus the
+     * click-pop, image-shape, text-shape, and canvas-mask plugins. That covers
+     * examples such as Among Us and Font Awesome out of the box. More exotic
+     * plugins can still require additional frontend work.
      */
     options: PropTypes.object,
 

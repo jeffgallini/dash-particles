@@ -3,7 +3,7 @@ module DashParticles
 using Dash
 
 const resources_path = realpath(joinpath( @__DIR__, "..", "deps"))
-const version = "0.0.1"
+const version = "0.0.2"
 
 include("jl/'dp'_dashparticles.jl")
 
@@ -16,14 +16,14 @@ function __init__()
             [
                 DashBase.Resource(
     relative_package_path = "async-DashParticles.js",
-    external_url = "https://unpkg.com/dash_particles@0.0.1/dash_particles/async-DashParticles.js",
+    external_url = "https://unpkg.com/dash_particles@0.0.2/dash_particles/async-DashParticles.js",
     dynamic = nothing,
     async = :true,
     type = :js
 ),
 DashBase.Resource(
     relative_package_path = "async-DashParticles.js.map",
-    external_url = "https://unpkg.com/dash_particles@0.0.1/dash_particles/async-DashParticles.js.map",
+    external_url = "https://unpkg.com/dash_particles@0.0.2/dash_particles/async-DashParticles.js.map",
     dynamic = true,
     async = nothing,
     type = :js

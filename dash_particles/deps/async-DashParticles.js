@@ -1,2 +1,2 @@
-"use strict";(self.webpackChunkdash_particles=self.webpackChunkdash_particles||[]).push([[795],{469:(e,t,a)=>{a.r(t),a.d(t,{default:()=>i});var n=a(609),s=a.n(n),r=a(120),l=a.n(r),u=function(e){var t=e.id,a=e.label,n=e.setProps,r=e.value;return s().createElement("div",{id:t},"ExampleComponent: ",a," ",s().createElement("input",{value:r,onChange:function(e){n({value:e.target.value})}}))};u.defaultProps={},u.propTypes={id:l().string,label:l().string.isRequired,value:l().string,setProps:l().func};const i=u}}]);
+"use strict";(self.webpackChunkdash_particles=self.webpackChunkdash_particles||[]).push([[795],{469:(e,t,a)=>{a.r(t),a.d(t,{default:()=>i});const i=window.dash_particles&&window.dash_particles.DashParticles}}]);
 //# sourceMappingURL=async-DashParticles.js.map

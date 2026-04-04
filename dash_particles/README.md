@@ -3,26 +3,18 @@
 [![PyPI version](https://badge.fury.io/py/dash-particles.svg)](https://badge.fury.io/py/dash-particles)
 [![npm version](https://badge.fury.io/js/dash-particles.svg)](https://badge.fury.io/js/dash-particles)
 
-A Dash component library that brings interactive particle animation backgrounds to your Dash applications. Built on top of the [tsParticles](https://particles.js.org/) library.
+`dash-particles` brings tsParticles backgrounds to Dash with a Python-first API.
+Instead of building one giant nested dict, you can compose configs with
+`dp.Options(...)`, `dp.Particles(...)`, `dp.Interactivity(...)`, and curated
+`dp.presets.*` helpers.
 
-What's the use case? I want to have a nice background for my Dash app for login screens, etc. I like the [particles.js](https://particles.js.org/) library, but I want to use it in Dash. It's a fairly niche use case, but a nice package to have for Dash.
+[Live demo](https://app.py.cafe/jeffgallini/dash-particle-system-visualizer)
 
-[See a demo of the features](https://app.py.cafe/jeffgallini/dash-particle-system-visualizer)
+## Why Use It
 
-It's not yet the full feature set of [particles.js](https://particles.js.org/), but it's a start, feel free to contribute! I just wanted to get something out there for a project I'm working on.
-
-![Dash Particles Demo - Snow](https://github.com/jeffgallini/dash-particles/blob/master/dash_particles/assets/particles_demo_snow.gif?raw=true)
-![Dash Particles Demo - Bubbles](https://github.com/jeffgallini/dash-particles/blob/master/dash_particles/assets/particles_demo_bubbles.gif?raw=true)
-![Dash Particles Demo - Repulse](https://github.com/jeffgallini/dash-particles/blob/master/dash_particles/assets/particles_demo_repulse.gif?raw=true)
-![Dash Particles Demo - Attract](https://github.com/jeffgallini/dash-particles/blob/master/dash_particles/assets/particles_demo_attract.gif?raw=true)
-
-## Features
-
-- Highly customizable particle animations
-- Interactive effects (hover, click)
-- Multiple preset configurations
-- Responsive design
-- Seamless integration with Dash
+- Build particle configs with Python classes instead of raw JSON-shaped dicts.
+- Start quickly with `dp.presets.*`, then override only the sections you need.
+- Drop animated backgrounds into full pages, hero sections, login screens, and dashboards.
 
 ## Installation
 
@@ -30,399 +22,225 @@ It's not yet the full feature set of [particles.js](https://particles.js.org/), 
 pip install dash-particles
 ```
 
-## Basic Usage
+## 60-Second Quickstart
+
+This is the fastest path to a visible background while still showing the
+structured API clearly.
 
 ```python
 import dash
 from dash import html
-import dash_particles
+import dash_particles as dp
 
 app = dash.Dash(__name__)
 
-app.layout = html.Div([
-    html.H1("My Dash App with Particles"),
-    
-    dash_particles.DashParticles(
-        id="particles",
-        options={
-            "background": {
-                "color": {
-                    "value": "#f0f0f0"
-                }
-            },
-            "particles": {
-                "color": {
-                    "value": "#000000"
-                },
-                "number": {
-                    "value": 50
-                },
-                "size": {
-                    "value": 5
-                },
-                "links": {
-                    "enable": True,
-                    "color": "#000000",
-                    "opacity": 0.8,
-                    "width": 2
-                }
-            },
-            "interactivity": {
-                "events": {
-                    "onClick": {
-                        "enable": True,
-                        "mode": "push"
-                    },
-                    "onHover": {
-                        "enable": True,
-                        "mode": "repulse"
-                    }
-                }
-            }
-        },
-        height="400px",
-        width="100%"
-    )
-])
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
-```
-
-## Component Properties
-
-| Property | Type | Description | Default |
-|----------|------|-------------|---------|
-| `id` | string | The ID used to identify this component in Dash callbacks | None |
-| `options` | object | Configuration options for the particles (see Configuration section) | Default network |
-| `height` | string | Height of the particles container (CSS value) | '400px' |
-| `width` | string | Width of the particles container (CSS value) | '100%' |
-| `className` | string | Additional CSS class for the container div | None |
-| `style` | object | Additional inline styles for the container div | {} |
-| `particlesLoaded` | boolean | Read-only property indicating if particles have been loaded | False |
-
-## Configuration
-
-The `options` property accepts a configuration object that follows the tsParticles configuration format. Here are the main sections:
-
-### Background
-
-```python
-"background": {
-    "color": {
-        "value": "#f0f0f0"  # Background color
-    }
-}
-```
-
-### Particles
-
-```python
-"particles": {
-    "color": {
-        "value": "#000000"  # Particle color (can be string or array)
-    },
-    "number": {
-        "value": 50  # Number of particles
-    },
-    "size": {
-        "value": 5,  # Particle size
-        "random": True  # Random sizes
-    },
-    "opacity": {
-        "value": 0.8,  # Particle opacity
-        "random": False  # Random opacity
-    },
-    "links": {
-        "enable": True,  # Enable links between particles
-        "color": "#000000",  # Link color
-        "opacity": 0.8,  # Link opacity
-        "width": 2,  # Link width
-        "distance": 150  # Maximum distance for links
-    },
-    "move": {
-        "enable": True,  # Enable particle movement
-        "speed": 3,  # Movement speed
-        "direction": "none",  # Movement direction
-        "random": False,  # Random movement
-        "straight": False,  # Straight movement
-        "outModes": {
-            "default": "bounce"  # Behavior when reaching the edge
-        }
-    },
-    "shape": {
-        "type": "circle"  # Particle shape (circle, square, triangle, etc.)
-    }
-}
-```
-
-### Interactivity
-
-```python
-"interactivity": {
-    "events": {
-        "onClick": {
-            "enable": True,  # Enable click interactions
-            "mode": "push"  # Click effect (push, remove, repulse, bubble)
-        },
-        "onHover": {
-            "enable": True,  # Enable hover interactions
-            "mode": "repulse"  # Hover effect (grab, repulse, bubble, connect)
-        }
-    },
-    "modes": {
-        "grab": {
-            "distance": 200,  # Grab interaction distance
-            "links": {
-                "opacity": 1  # Link opacity on grab
-            }
-        },
-        "repulse": {
-            "distance": 100,  # Repulse distance
-            "duration": 0.4  # Repulse duration
-        }
-    }
-}
-```
-
-## Preset Configurations
-
-Dash Particles comes with several preset configurations that you can use as a starting point:
-
-### Default Network
-```python
-dash_particles.DashParticles(
-    id="particles",
-    options=particle_configs["default"],
-    height="400px",
-    width="100%"
-)
-```
-
-### Bubbles
-```python
-dash_particles.DashParticles(
-    id="particles",
-    options={
-        "background": {
-            "color": {
-                "value": "#0d47a1"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#ffffff"
-            },
-            "number": {
-                "value": 100
-            },
-            "size": {
-                "value": 10,
-                "random": True
-            },
-            "opacity": {
-                "value": 0.7,
-                "random": True
-            },
-            "move": {
-                "enable": True,
-                "speed": 2,
-                "direction": "none",
-                "random": True
-            },
-            "links": {
-                "enable": False
-            }
-        }
-    },
-    height="400px",
-    width="100%"
-)
-```
-
-### Snow
-```python
-dash_particles.DashParticles(
-    id="particles",
-    options={
-        "background": {
-            "color": {
-                "value": "#2c3e50"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#ffffff"
-            },
-            "number": {
-                "value": 200
-            },
-            "size": {
-                "value": 3,
-                "random": True
-            },
-            "opacity": {
-                "value": 0.8
-            },
-            "move": {
-                "enable": True,
-                "speed": 1,
-                "direction": "bottom",
-                "straight": False
-            },
-            "links": {
-                "enable": False
-            }
-        }
-    },
-    height="400px",
-    width="100%"
-)
-```
-
-## Advanced Usage
-
-### Using as a Background
-
-To use particles as a background for your entire app or a section:
-
-```python
-import dash
-from dash import html
-import dash_particles
-
-app = dash.Dash(__name__)
-
-app.layout = html.Div([
-    # Container with relative positioning
-    html.Div([
-        # Particles as background
-        html.Div([
-            dash_particles.DashParticles(
-                id="particles-bg",
-                options={
-                    "background": {
-                        "color": {
-                            "value": "transparent"  # Transparent background
-                        }
-                    },
-                    "particles": {
-                        "color": {
-                            "value": "#0075FF"
-                        },
-                        "number": {
-                            "value": 80
-                        },
-                        "links": {
-                            "enable": True,
-                            "color": "#0075FF",
-                            "opacity": 0.5
-                        }
-                    }
-                },
-                height="100%",
-                width="100%",
-            )
-        ], style={
-            "position": "absolute",
-            "top": 0,
-            "left": 0,
-            "right": 0,
-            "bottom": 0,
-            "zIndex": 1  # Low z-index to be behind content
-        }),
-        
-        # Content overlay
-        html.Div([
-            html.H1("My App with Particle Background"),
-            html.P("This content appears above the particles")
-        ], style={
-            "position": "relative",
-            "zIndex": 10,  # Higher z-index to be above particles
-            "padding": "20px"
-        })
-    ], style={
-        "position": "relative",
-        "height": "100vh",
-        "overflow": "hidden"
-    })
-])
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
-```
-
-### Dynamic Configuration with Callbacks
-
-You can dynamically update the particles configuration using Dash callbacks:
-
-```python
-from dash import Input, Output, callback, dcc
-
-app.layout = html.Div([
-    dcc.Dropdown(
-        id="particle-preset",
-        options=[
-            {"label": "Default", "value": "default"},
-            {"label": "Bubbles", "value": "bubbles"},
-            {"label": "Snow", "value": "snow"}
-        ],
-        value="default"
+background_particles = dp.DashParticles(
+    id="page-particles",
+    config=dp.Options(
+        background=dp.Background(color=dp.Color("transparent")),
+        particles=dp.Particles(
+            color=dp.Color("#2563eb"),
+            number=dp.ParticleNumber(value=80),
+            links=dp.Links(
+                enable=True,
+                color="#2563eb",
+                opacity=0.35,
+                distance=140,
+            ),
+            move=dp.Move(
+                enable=True,
+                speed=2,
+                direction="none",
+                out_modes=dp.OutModes(default="bounce"),
+            ),
+            size=dp.Size(value=3),
+        ),
     ),
-    
-    html.Div(id="particles-container")
-])
-
-@callback(
-    Output("particles-container", "children"),
-    Input("particle-preset", "value")
+    height="100%",
+    width="100%",
 )
-def update_particles(preset):
-    presets = {
-        "default": {...},  # Default config
-        "bubbles": {...},  # Bubbles config
-        "snow": {...}      # Snow config
-    }
-    
-    return dash_particles.DashParticles(
-        id="particles",
-        options=presets[preset],
-        height="400px",
-        width="100%"
-    )
+
+app.layout = html.Div(
+    [
+        html.Div(
+            background_particles,
+            style={
+                "position": "fixed",
+                "inset": 0,
+                "zIndex": 0,
+            },
+        ),
+        html.Div(
+            [
+                html.H1("Dash Particles"),
+                html.P("Your app content stays above the animated background."),
+            ],
+            style={
+                "position": "relative",
+                "zIndex": 1,
+                "padding": "4rem",
+            },
+        ),
+    ],
+    style={"minHeight": "100vh"},
+)
+
+if __name__ == "__main__":
+    app.run(debug=True)
 ```
 
-## Browser Compatibility
+## The Main Mental Model
 
-Dash Particles is compatible with all modern browsers:
+The recommended entry point is:
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-- Opera (latest)
+```python
+import dash_particles as dp
 
-## Performance Considerations
+config = dp.Options(
+    background=dp.Background(color=dp.Color("transparent")),
+    fps_limit=60,
+    detect_retina=True,
+    full_screen=dp.FullScreen(enable=False, z_index=0),
+    particles=dp.Particles(
+        color=dp.Color("#0075FF"),
+        number=dp.ParticleNumber(
+            value=80,
+            density=dp.Density(enable=True, area=800),
+        ),
+        size=dp.Size(value=dp.RangeValue(min=1, max=5)),
+        opacity=dp.Opacity(value=0.5),
+        links=dp.Links(enable=True, color="#0075FF", opacity=0.5, width=1),
+        move=dp.Move(
+            enable=True,
+            speed=3,
+            direction="none",
+            random=False,
+            straight=False,
+            out_modes=dp.OutModes(default="bounce"),
+        ),
+        shape=dp.Shape(type="circle"),
+    ),
+    interactivity=dp.Interactivity(
+        events=dp.Events(
+            on_click=dp.Action(enable=True, mode="push"),
+            on_hover=dp.Action(enable=True, mode="repulse"),
+        ),
+    ),
+)
 
-For optimal performance:
+particles = dp.DashParticles(id="particles", config=config, height="400px")
+```
 
-- Limit the number of particles (50-200 is usually sufficient)
-- Reduce particle complexity on mobile devices
-- Consider disabling interactions on low-end devices
+You can also override top-level sections directly in the component call:
+
+```python
+import dash_particles as dp
+
+dp.DashParticles(
+    id="particles",
+    background=dp.Background(color=dp.Color("#0f172a")),
+    particles=dp.Particles(color=dp.Color("#ffffff")),
+    interactivity=dp.Interactivity(
+        events=dp.Events(on_hover=dp.Action(enable=True, mode="grab"))
+    ),
+)
+```
+
+## Built-In Presets
+
+`dp.presets.*` gives you fast, readable starting points:
+
+```python
+import dash_particles as dp
+
+hero_particles = dp.DashParticles(
+    id="hero-particles",
+    config=dp.presets.stars(),
+    height="100%",
+    width="100%",
+)
+```
+
+That includes both general-purpose presets and richer sample-inspired ones such
+as `dp.presets.among_us()`, `dp.presets.parallax()`, `dp.presets.fontawesome()`,
+`dp.presets.blurred_particles()`, `dp.presets.hypno_squares()`, and `dp.presets.multiple_images()`.
+
+You can still layer overrides on top of a preset:
+
+```python
+import dash_particles as dp
+
+hero_particles = dp.DashParticles(
+    id="hero-particles",
+    config=dp.presets.connect(),
+    particles=dp.Particles(
+        color=dp.Color("#22c55e"),
+        links=dp.Links(enable=True, color="#22c55e", opacity=0.25),
+    ),
+)
+```
+
+## Public Python API
+
+| Use case | Main helpers |
+|----------|--------------|
+| Render the component | `dp.DashParticles(...)` |
+| Top-level config object | `dp.Options(...)` / `dp.ParticlesOptions(...)` |
+| Presets | `dp.presets.default()`, `dp.presets.stars()`, `dp.presets.connect()`, `dp.presets.among_us()`, `dp.presets.fontawesome()`, `dp.presets.blurred_particles()`, `dp.presets.hypno_squares()` |
+| Background color and layout | `dp.Background`, `dp.BackgroundMask`, `dp.BackgroundMaskCover`, `dp.Color`, `dp.FullScreen` |
+| Particle counts and density | `dp.ParticleNumber`, `dp.Density` |
+| Particle appearance | `dp.Particles`, `dp.Size`, `dp.Opacity`, `dp.Shape`, `dp.RangeValue` |
+| Motion and edges | `dp.Move`, `dp.OutModes`, `dp.Motion` |
+| Interactivity | `dp.Interactivity`, `dp.Events`, `dp.Action`, `dp.Modes` |
+| Advanced top-level config | `dp.Responsive`, `dp.Theme`, `dp.ManualParticle`, `dp.Position` |
+
+## Support Boundaries
+
+`dash-particles` currently ships with the `tsparticles` full JavaScript bundle
+plus the image-shape, text-shape, and canvas-mask plugins.
+
+- The structured Python API is the default and recommended way to author configs.
+- Raw dicts remain supported through `config={...}` and `options={...}`.
+- `extra={...}` is the escape hatch for tsParticles keys that do not yet have a dedicated Python helper.
+- `extra` and raw dicts do not load missing JavaScript plugins by themselves.
+- Common advanced features like `emitters`, `backgroundMask`, `canvasMask`, and Font Awesome or character-style particles now work with the shipped bundle.
+- The bundled presets cover emitters, image particles, background masks, character particles, themeable blur effects, and animated geometric effects through the shipped runtime.
+
+## Compatibility And Precedence
+
+- `config=` accepts `dp.Options(...)`, `dp.ParticlesOptions(...)`, or raw dictionaries.
+- `options=` is still supported for backward compatibility, but new code should prefer `config=`.
+- `options=` and `config=` cannot be used together in the same component call.
+- Explicit top-level sections like `particles=...`, `background=...`, or `full_screen=...` override overlapping keys from `config=`.
+- Use `extra={...}` on any structured config object for unsupported tsParticles keys inside the current runtime bundle.
+
+Example escape hatch:
+
+```python
+import dash_particles as dp
+
+config = dp.Options(
+    particles=dp.Particles(
+        color=dp.Color(["#ff5722", "#ff9800", "#ffeb3b"]),
+        extra={"shadow": {"enable": True, "blur": 8, "color": "#ff9800"}},
+    ),
+    extra={"fullScreen": {"enable": False}},
+)
+```
+
+## Where To Go Next
+
+- [Docs Landing Page](docs/README.md)
+- [Getting Started](docs/getting-started.md)
+- [Config Model](docs/config-model.md)
+- [Recipes](docs/recipes.md)
+- [Migration Guide](docs/migration.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to this project.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
-## Acknowledgements
-
-- [tsParticles](https://particles.js.org/) - The underlying JavaScript library
-- [Dash](https://dash.plotly.com/) - The Python framework for building web applications
-
-## Support
-
-If you encounter any issues or have questions, please [open an issue](https://github.com/yourusername/dash-particles/issues) on GitHub.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

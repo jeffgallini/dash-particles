@@ -1,792 +1,1049 @@
-import dash
-from dash import html, dcc, callback, Input, Output, State, ALL
-import dash_particles
+"""Helper and demo app for `dash-particles`.
+
+This module is intentionally lightweight:
+
+1. It showcases the package's built-in presets and official-sample-inspired examples.
+2. It gives users a fast way to tweak the current background without learning the
+   entire tsParticles surface area first.
+3. It lets users inspect the live JSON config and export idiomatic `dp.Options(...)`
+   code for the current background.
+
+Dependencies are kept minimal on purpose: only Dash, `dash-particles`, and the
+Python standard library are used here.
+"""
+
+from dataclasses import fields
+import hashlib
 import json
-import pprint  # Added for exporting config
+import pprint
+import textwrap
 
-app = dash.Dash(__name__)
+import dash
+from dash import Input, Output, State, dcc, html, no_update
+import dash_particles as dp
 
-# Define 6 different particle configurations
-particle_configs = {
-    "default": {
-        "background": {
-            "color": {
-                "value": "#f0f0f0"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#000000"
-            },
-            "number": {
-                "value": 50
-            },
-            "size": {
-                "value": 5
-            },
-            "links": {
-                "enable": True,
-                "color": "#000000",
-                "opacity": 0.8,
-                "width": 2
-            }
-        },
-        "interactivity": {
-            "events": {
-                "onClick": {
-                    "enable": True,
-                    "mode": "push"
-                },
-                "onHover": {
-                    "enable": True,
-                    "mode": "repulse"
-                }
-            }
-        }
-    },
-    "bubbles": {
-        "background": {
-            "color": {
-                "value": "#0d47a1"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#ffffff"
-            },
-            "number": {
-                "value": 100
-            },
-            "size": {
-                "value": 10,
-                "random": True
-            },
-            "opacity": {
-                "value": 0.7,
-                "random": True
-            },
-            "move": {
-                "enable": True,
-                "speed": 2,
-                "direction": "none",
-                "random": True
-            },
-            "links": {
-                "enable": False
-            }
-        }
-    },
-    "snow": {
-        "background": {
-            "color": {
-                "value": "#2c3e50"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#ffffff"
-            },
-            "number": {
-                "value": 200
-            },
-            "size": {
-                "value": 3,
-                "random": True
-            },
-            "opacity": {
-                "value": 0.8
-            },
-            "move": {
-                "enable": True,
-                "speed": 1,
-                "direction": "bottom",
-                "straight": False
-            },
-            "links": {
-                "enable": False
-            }
-        }
-    },
-    "fire": {
-        "background": {
-            "color": {
-                "value": "#000000"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": ["#ff5722", "#ff9800", "#ffeb3b"]
-            },
-            "number": {
-                "value": 80
-            },
-            "shape": {
-                "type": "circle"
-            },
-            "size": {
-                "value": 8,
-                "random": True
-            },
-            "opacity": {
-                "value": 0.7,
-                "random": True
-            },
-            "move": {
-                "enable": True,
-                "speed": 5,
-                "direction": "top",
-                "random": True,
-                "out_mode": "out"
-            },
-            "links": {
-                "enable": False
-            }
-        }
-    },
-    "stars": {
-        "background": {
-            "color": {
-                "value": "#0a0a29"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#ffffff"
-            },
-            "number": {
-                "value": 150
-            },
-            "size": {
-                "value": 2,
-                "random": True
-            },
-            "opacity": {
-                "value": 1,
-                "random": True
-            },
-            "move": {
-                "enable": True,
-                "speed": 0.2,
-                "direction": "none",
-                "random": True
-            },
-            "links": {
-                "enable": False
-            },
-            "twinkle": {
-                "particles": {
-                    "enable": True,
-                    "frequency": 0.05,
-                    "opacity": 1
-                }
-            }
-        }
-    },
-    "connect": {
-        "background": {
-            "color": {
-                "value": "#ffffff"
-            }
-        },
-        "particles": {
-            "color": {
-                "value": "#3498db"
-            },
-            "number": {
-                "value": 120
-            },
-            "size": {
-                "value": 3
-            },
-            "links": {
-                "enable": True,
-                "color": "#3498db",
-                "opacity": 0.4,
-                "width": 1,
-                "distance": 150
-            },
-            "move": {
-                "enable": True,
-                "speed": 2
-            }
-        },
-        "interactivity": {
-            "events": {
-                "onHover": {
-                    "enable": True,
-                    "mode": "grab"
-                },
-                "onClick": {
-                    "enable": True,
-                    "mode": "push"
-                }
-            },
-            "modes": {
-                "grab": {
-                    "distance": 200,
-                    "links": {
-                        "opacity": 1
-                    }
-                }
-            }
-        }
+
+FONT_AWESOME_STYLESHEET = (
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+)
+
+
+def _official_example(
+    label,
+    config,
+    description,
+    official_url,
+    support="Works with the current full runtime",
+    source="Official sample inspired",
+):
+    return {
+        "label": label,
+        "config": config,
+        "description": description,
+        "official_url": official_url,
+        "support": support,
+        "source": source,
     }
+
+
+def _built_in_preset(name):
+    return {
+        "label": dp.presets.PRESET_LABELS[name],
+        "config": dp.presets.PRESET_BUILDERS[name](),
+        "description": dp.presets.PRESET_DESCRIPTIONS[name],
+        "official_url": None,
+        "support": "Works with the current full runtime",
+        "source": "Built-in preset",
+    }
+
+
+example_catalog = {
+    "default": _built_in_preset("default"),
+    "bubbles": _built_in_preset("bubbles"),
+    "snow": _built_in_preset("snow"),
+    "fire": _built_in_preset("fire"),
+    "stars": _built_in_preset("stars"),
+    "connect": _built_in_preset("connect"),
+    "among_us": _official_example(
+        dp.presets.PRESET_LABELS["among_us"],
+        dp.presets.among_us(),
+        dp.presets.PRESET_DESCRIPTIONS["among_us"],
+        "https://particles.js.org/samples/index.html#amongUs",
+        support="Works with the current full runtime, including emitter support",
+    ),
+    "multiple_images": _official_example(
+        dp.presets.PRESET_LABELS["multiple_images"],
+        dp.presets.multiple_images(),
+        dp.presets.PRESET_DESCRIPTIONS["multiple_images"],
+        "https://particles.js.org/samples/index.html#images",
+    ),
+    "parallax": _official_example(
+        dp.presets.PRESET_LABELS["parallax"],
+        dp.presets.parallax(),
+        dp.presets.PRESET_DESCRIPTIONS["parallax"],
+        "https://particles.js.org/samples/index.html#parallax",
+        support="Works with the current full runtime",
+    ),
+    "fontawesome": _official_example(
+        dp.presets.PRESET_LABELS["fontawesome"],
+        dp.presets.fontawesome(),
+        dp.presets.PRESET_DESCRIPTIONS["fontawesome"],
+        "https://particles.js.org/samples/index.html#fontawesome",
+        support="Works with the current full runtime, and this demo loads the Font Awesome stylesheet for you",
+    ),
+    "blurred_particles": _official_example(
+        dp.presets.PRESET_LABELS["blurred_particles"],
+        dp.presets.blurred_particles(),
+        dp.presets.PRESET_DESCRIPTIONS["blurred_particles"],
+        "https://codepen.io/matteobruni/pen/qBPxjQY",
+        support="Works with the current full runtime, including emitters and theme switching",
+        source="CodePen inspired",
+    ),
+    "hypno_squares": _official_example(
+        dp.presets.PRESET_LABELS["hypno_squares"],
+        dp.presets.hypno_squares(),
+        dp.presets.PRESET_DESCRIPTIONS["hypno_squares"],
+        "https://codepen.io/matteobruni/pen/BaGbWdb",
+        support="Works with the current full runtime, including size and rotate animations",
+        source="CodePen inspired",
+    ),
 }
 
-# Color options for dropdowns
-color_options = [
-    {"label": "Black", "value": "#000000"},
-    {"label": "White", "value": "#ffffff"},
-    {"label": "Red", "value": "#ff0000"},
-    {"label": "Green", "value": "#00ff00"},
-    {"label": "Blue", "value": "#0000ff"},
-    {"label": "Yellow", "value": "#ffff00"},
-    {"label": "Cyan", "value": "#00ffff"},
-    {"label": "Magenta", "value": "#ff00ff"},
-    {"label": "Orange", "value": "#ff9800"},
-    {"label": "Purple", "value": "#9c27b0"},
-    {"label": "Teal", "value": "#009688"},
-    {"label": "Pink", "value": "#e91e63"},
-    {"label": "Deep Blue", "value": "#0d47a1"},
-    {"label": "Dark Gray", "value": "#333333"},
-    {"label": "Light Gray", "value": "#cccccc"},
+
+particle_presets = {key: metadata["config"] for key, metadata in example_catalog.items()}
+particle_configs = {key: metadata["config"].to_dict() for key, metadata in example_catalog.items()}
+
+
+STRUCTURED_CLASS_BY_PATH = {
+    (): dp.Options,
+    ("fullScreen",): dp.FullScreen,
+    ("motion",): dp.Motion,
+    ("motion", "reduce"): dp.MotionReduce,
+    ("background",): dp.Background,
+    ("background", "color"): dp.Color,
+    ("backgroundMask",): dp.BackgroundMask,
+    ("backgroundMask", "cover"): dp.BackgroundMaskCover,
+    ("particles",): dp.Particles,
+    ("particles", "color"): dp.Color,
+    ("particles", "number"): dp.ParticleNumber,
+    ("particles", "number", "density"): dp.Density,
+    ("particles", "size"): dp.Size,
+    ("particles", "opacity"): dp.Opacity,
+    ("particles", "links"): dp.Links,
+    ("particles", "move"): dp.Move,
+    ("particles", "move", "outModes"): dp.OutModes,
+    ("particles", "shape"): dp.Shape,
+    ("particles", "twinkle"): dp.Twinkle,
+    ("particles", "twinkle", "particles"): dp.TwinkleParticles,
+    ("interactivity",): dp.Interactivity,
+    ("interactivity", "events"): dp.Events,
+    ("interactivity", "events", "onClick"): dp.Action,
+    ("interactivity", "events", "onHover"): dp.Action,
+    ("interactivity", "modes"): dp.Modes,
+    ("interactivity", "modes", "grab"): dp.Grab,
+    ("interactivity", "modes", "grab", "links"): dp.GrabLinks,
+    ("interactivity", "modes", "repulse"): dp.Repulse,
+    ("interactivity", "modes", "push"): dp.Push,
+    ("interactivity", "modes", "remove"): dp.Remove,
+    ("interactivity", "modes", "bubble"): dp.Bubble,
+    ("manualParticles", "<item>"): dp.ManualParticle,
+    ("manualParticles", "<item>", "position"): dp.Position,
+    ("manualParticles", "<item>", "options"): dp.Options,
+    ("responsive", "<item>"): dp.Responsive,
+    ("responsive", "<item>", "options"): dp.Options,
+    ("themes", "<item>"): dp.Theme,
+    ("themes", "<item>", "options"): dp.Options,
+}
+
+STRUCTURED_LIST_ITEM_CLASS_BY_PATH = {
+    ("manualParticles",): dp.ManualParticle,
+    ("responsive",): dp.Responsive,
+    ("themes",): dp.Theme,
+}
+
+COLOR_SUGGESTIONS = [
+    "#020617",
+    "#0f172a",
+    "#111827",
+    "#ffffff",
+    "#38bdf8",
+    "#22c55e",
+    "#f97316",
+    "#ef4444",
+    "#facc15",
+    "#c4b5fd",
 ]
 
-app.layout = html.Div([
-    html.H1("Dash Particles Demo",
-            style={"textAlign": "center", "marginBottom": "20px", "position": "relative", "zIndex": 10}),
+HOVER_MODE_OPTIONS = [
+    {"label": "None", "value": "none"},
+    {"label": "Grab", "value": "grab"},
+    {"label": "Bubble", "value": "bubble"},
+    {"label": "Repulse", "value": "repulse"},
+    {"label": "Connect", "value": "connect"},
+]
 
-    # Main content container with particles and controls
-    html.Div([
-        # Left side - Particles container
-        html.Div([
-            # Particles container - positioned absolutely to be behind everything
-            html.Div(id="particles-container", style={
-                "position": "absolute",
-                "top": 0,
-                "left": 0,
-                "right": 0,
-                "bottom": 0,
-                "zIndex": 1  # Low z-index to be behind other elements
-            }),
+CLICK_MODE_OPTIONS = [
+    {"label": "None", "value": "none"},
+    {"label": "Attract", "value": "attract"},
+    {"label": "Bubble", "value": "bubble"},
+    {"label": "Pause", "value": "pause"},
+    {"label": "Pop", "value": "pop"},
+    {"label": "Push", "value": "push"},
+    {"label": "Remove", "value": "remove"},
+    {"label": "Repulse", "value": "repulse"},
+    {"label": "Trail", "value": "trail"},
+    {"label": "Emitter", "value": "emitter"},
+    {"label": "Absorber", "value": "absorber"},
+]
 
-            # Dropdown overlay
-            html.Div([
-                dcc.Dropdown(
-                    id="particle-preset-dropdown",
-                    options=[
-                        {"label": "Default Network", "value": "default"},
-                        {"label": "Bubbles", "value": "bubbles"},
-                        {"label": "Snow", "value": "snow"},
-                        {"label": "Fire", "value": "fire"},
-                        {"label": "Stars", "value": "stars"},
-                        {"label": "Connected Network", "value": "connect"}
-                    ],
-                    value="default",
-                    style={
-                        "width": "300px",
-                        "backgroundColor": "rgba(255, 255, 255, 0.8)",
-                    },
-                    placeholder="Select a preset"
-                ),
-            ], style={
-                "position": "relative",
-                "top": "20px",
-                "left": "20px",
-                "zIndex": 10,  # Higher z-index to appear above particles
-            }),
-
-            # Description overlay
-            html.Div(
-                id="description",
-                style={
-                    "position": "relative",
-                    "bottom": "-500px",  # Position at the bottom
-                    "left": "20px",
-                    "backgroundColor": "rgba(255, 255, 255, 0.8)",
-                    "padding": "10px",
-                    "borderRadius": "5px",
-                    "zIndex": 10,  # Higher z-index to appear above particles
-                    "maxWidth": "60%"
-                }
-            )
-        ], style={
-            "position": "relative",
-            "height": "600px",
-            "width": "65%",
-            "backgroundColor": "transparent",  # Make transparent to see particles
-            "borderRadius": "10px",
-            "boxShadow": "0 4px 6px rgba(0, 0, 0, 0.1)",
-            "marginRight": "20px",
-            "overflow": "hidden"  # Ensure particles don't overflow
-        }),
-
-        # Right side - Controls
-        html.Div([
-            html.H3("Customize Particles", style={"marginTop": "0", "marginBottom": "20px"}),
-
-            # Background settings
-            html.Div([
-                html.H4("Background", style={"marginBottom": "10px"}),
-                html.Label("Background Color"),
-                dcc.Dropdown(
-                    id={"type": "particle-control", "param": "background.color.value"},
-                    options=color_options,
-                    value="#f0f0f0",
-                    clearable=False
-                ),
-            ], style={"marginBottom": "20px"}),
-
-            # Particle settings
-            html.Div([
-                html.H4("Particles", style={"marginBottom": "10px"}),
-
-                html.Label("Particle Color"),
-                dcc.Dropdown(
-                    id={"type": "particle-control", "param": "particles.color.value"},
-                    options=color_options,
-                    value="#000000",
-                    clearable=False
-                ),
-
-                html.Label("Number of Particles", style={"marginTop": "10px"}),
-                dcc.Slider(
-                    id={"type": "particle-control", "param": "particles.number.value"},
-                    min=10,
-                    max=300,
-                    step=10,
-                    value=50,
-                    marks={10: "10", 150: "150", 300: "300"},
-                ),
-
-                html.Label("Particle Size", style={"marginTop": "10px"}),
-                dcc.Slider(
-                    id={"type": "particle-control", "param": "particles.size.value"},
-                    min=1,
-                    max=20,
-                    step=1,
-                    value=5,
-                    marks={1: "1", 10: "10", 20: "20"},
-                ),
-
-                html.Label("Opacity", style={"marginTop": "10px"}),
-                dcc.Slider(
-                    id={"type": "particle-control", "param": "particles.opacity.value"},
-                    min=0.1,
-                    max=1,
-                    step=0.1,
-                    value=0.8,
-                    marks={0.1: "0.1", 0.5: "0.5", 1: "1"},
-                ),
-            ], style={"marginBottom": "20px"}),
-
-            # Links settings
-            html.Div([
-                html.H4("Links", style={"marginBottom": "10px"}),
-
-                html.Label("Enable Links"),
-                dcc.RadioItems(
-                    id={"type": "particle-control", "param": "particles.links.enable"},
-                    options=[
-                        {"label": "Enabled", "value": True},
-                        {"label": "Disabled", "value": False}
-                    ],
-                    value=True,
-                    inline=True
-                ),
-
-                html.Div(id="links-controls", children=[
-                    html.Label("Link Color", style={"marginTop": "10px"}),
-                    dcc.Dropdown(
-                        id={"type": "particle-control", "param": "particles.links.color"},
-                        options=color_options,
-                        value="#000000",
-                        clearable=False
-                    ),
-
-                    html.Label("Link Width", style={"marginTop": "10px"}),
-                    dcc.Slider(
-                        id={"type": "particle-control", "param": "particles.links.width"},
-                        min=1,
-                        max=5,
-                        step=0.5,
-                        value=2,
-                        marks={1: "1", 3: "3", 5: "5"},
-                    ),
-
-                    html.Label("Link Opacity", style={"marginTop": "10px"}),
-                    dcc.Slider(
-                        id={"type": "particle-control", "param": "particles.links.opacity"},
-                        min=0.1,
-                        max=1,
-                        step=0.1,
-                        value=0.8,
-                        marks={0.1: "0.1", 0.5: "0.5", 1: "1"},
-                    ),
-                ]),
-            ], style={"marginBottom": "20px"}),
-
-            # Movement settings
-            html.Div([
-                html.H4("Movement", style={"marginBottom": "10px"}),
-
-                html.Label("Enable Movement"),
-                dcc.RadioItems(
-                    id={"type": "particle-control", "param": "particles.move.enable"},
-                    options=[
-                        {"label": "Enabled", "value": True},
-                        {"label": "Disabled", "value": False}
-                    ],
-                    value=True,
-                    inline=True
-                ),
-
-                html.Div(id="movement-controls", children=[
-                    html.Label("Speed", style={"marginTop": "10px"}),
-                    dcc.Slider(
-                        id={"type": "particle-control", "param": "particles.move.speed"},
-                        min=1,
-                        max=10,
-                        step=1,
-                        value=3,
-                        marks={1: "1", 5: "5", 10: "10"},
-                    ),
-
-                    html.Label("Direction", style={"marginTop": "10px"}),
-                    dcc.Dropdown(
-                        id={"type": "particle-control", "param": "particles.move.direction"},
-                        options=[
-                            {"label": "None", "value": "none"},
-                            {"label": "Top", "value": "top"},
-                            {"label": "Bottom", "value": "bottom"},
-                            {"label": "Left", "value": "left"},
-                            {"label": "Right", "value": "right"},
-                        ],
-                        value="none",
-                        clearable=False
-                    ),
-                ]),
-            ], style={"marginBottom": "20px"}),
-
-            # Interactivity settings
-            html.Div([
-                html.H4("Interactivity", style={"marginBottom": "10px"}),
-
-                html.Label("Hover Effect"),
-                dcc.Dropdown(
-                    id={"type": "particle-control", "param": "interactivity.events.onHover.mode"},
-                    options=[
-                        {"label": "None", "value": "none"},
-                        {"label": "Repulse", "value": "repulse"},
-                        {"label": "Attract", "value": "attract"},
-                        {"label": "Grab", "value": "grab"},
-                        {"label": "Bubble", "value": "bubble"},
-                    ],
-                    value="repulse",
-                    clearable=False
-                ),
-
-                html.Label("Click Effect", style={"marginTop": "10px"}),
-                dcc.Dropdown(
-                    id={"type": "particle-control", "param": "interactivity.events.onClick.mode"},
-                    options=[
-                        {"label": "None", "value": "none"},
-                        {"label": "Push", "value": "push"},
-                        {"label": "Remove", "value": "remove"},
-                        {"label": "Repulse", "value": "repulse"},
-                        {"label": "Bubble", "value": "bubble"},
-                    ],
-                    value="push",
-                    clearable=False
-                ),
-            ]),
-
-            # Button container
-            html.Div([
-                html.Button("Apply Changes", id="apply-changes", n_clicks=0,
-                            style={
-                                "padding": "10px 20px", "backgroundColor": "#4CAF50", "color": "white",
-                                "border": "none", "borderRadius": "5px", "cursor": "pointer",
-                                "fontSize": "16px", "marginRight": "10px"
-                            }),
-                html.Button("Reset", id="reset-controls", n_clicks=0,
-                            style={
-                                "padding": "10px 20px", "backgroundColor": "#f44336", "color": "white",
-                                "border": "none", "borderRadius": "5px", "cursor": "pointer",
-                                "fontSize": "16px", "marginRight": "10px"
-                            }),
-                html.Button("Export Config", id="export-config-button", n_clicks=0,
-                            style={
-                                "padding": "10px 20px", "backgroundColor": "#2196F3", "color": "white",
-                                "border": "none", "borderRadius": "5px", "cursor": "pointer",
-                                "fontSize": "16px"
-                            }),
-            ], style={"marginTop": "20px", "display": "flex", "flexWrap": "wrap"}),
-
-            # Exported code display area
-            html.Div(id="export-output-container", style={"display": "none", "marginTop": "20px"}, children=[
-                html.H4("Exported Component Code"),
-                dcc.Textarea(
-                    id="export-code-output",
-                    readOnly=True,
-                    style={"width": "100%", "height": "300px", "fontFamily": "monospace", "fontSize": "12px",
-                           "border": "1px solid #ccc", "padding": "10px"},
-                    placeholder="Click 'Export Config' to generate the code..."
-                )
-            ]),
-
-            # Store for current configuration
-            dcc.Store(id="current-config", data=particle_configs["default"]),
-
-        ], style={
-            "width": "35%",
-            "padding": "20px",
-            "backgroundColor": "rgba(248, 249, 250, 0.9)",  # Semi-transparent background
-            "borderRadius": "10px",
-            "boxShadow": "0 4px 6px rgba(0, 0, 0, 0.1)",
-            "overflowY": "auto",
-            "maxHeight": "600px",
-            "position": "relative",
-            "zIndex": 10  # Higher z-index to appear above particles
-        }),
-    ], style={
-        "display": "flex",
-        "marginBottom": "20px",
-        "justifyContent": "center",
-        "position": "relative"  # Needed for absolute positioning of children
-    }),
-], style={
-    "position": "relative",  # Needed for absolute positioning of children
-    "minHeight": "100vh"
-})
+INTERACTIVITY_MODE_DEFAULTS = {
+    "attract": {
+        "distance": 200,
+        "duration": 0.4,
+        "easing": "ease-out-quad",
+        "factor": 1,
+        "maxSpeed": 50,
+        "speed": 1,
+    },
+    "bubble": {
+        "distance": 200,
+        "duration": 2,
+        "opacity": 1,
+        "size": 12,
+    },
+    "connect": {
+        "distance": 80,
+        "links": {"opacity": 0.5},
+        "radius": 60,
+    },
+    "grab": {
+        "distance": 200,
+        "links": {"opacity": 1},
+    },
+    "pause": {},
+    "push": {
+        "quantity": 4,
+    },
+    "remove": {
+        "quantity": 2,
+    },
+    "repulse": {
+        "distance": 200,
+        "duration": 0.4,
+    },
+    "trail": {
+        "delay": 1,
+        "pauseOnStop": False,
+        "quantity": 1,
+    },
+}
 
 
-# Callback to update links controls visibility
-@callback(
-    Output("links-controls", "style"),
-    Input({"type": "particle-control", "param": "particles.links.enable"}, "value")
-)
-def toggle_links_controls(enable_links):
-    if enable_links:
-        return {"display": "block"}
-    else:
-        return {"display": "none"}
+CONTROL_LABEL_STYLE = {
+    "display": "block",
+    "fontSize": "14px",
+    "fontWeight": "700",
+    "color": "#0f172a",
+    "marginBottom": "6px",
+}
+
+CONTROL_HINT_STYLE = {
+    "fontSize": "13px",
+    "lineHeight": "1.5",
+    "color": "#475569",
+    "margin": "0 0 10px 0",
+}
+
+CONTROL_BLOCK_STYLE = {"marginBottom": "18px"}
 
 
-# Callback to update movement controls visibility
-@callback(
-    Output("movement-controls", "style"),
-    Input({"type": "particle-control", "param": "particles.move.enable"}, "value")
-)
-def toggle_movement_controls(enable_movement):
-    if enable_movement:
-        return {"display": "block"}
-    else:
-        return {"display": "none"}
-
-
-# Initial load of particles
-@callback(
-    Output("particles-container", "children"),
-    Input("current-config", "data"),
-)
-def initial_load(config):
-    particles = dash_particles.DashParticles(
-        id="particles-initial",
-        options=config,
-        height="100%",
-        width="100%",
+def _control_block(label, hint, control):
+    return html.Div(
+        [
+            html.Label(label, style=CONTROL_LABEL_STYLE),
+            html.P(hint, style=CONTROL_HINT_STYLE),
+            control,
+        ],
+        style=CONTROL_BLOCK_STYLE,
     )
 
-    return particles
+
+def _structured_class_name(path, cls):
+    if path == ():
+        return "Options"
+    return cls.__name__
 
 
-# Callback to update description
-@callback(
-    Output("description", "children"),
-    Input("particle-preset-dropdown", "value")
-)
-def update_description(preset_name):
-    descriptions = {
-        "default": "A simple network of connected particles with hover and click interactions.",
-        "bubbles": "Floating bubbles of different sizes with a deep blue background.",
-        "snow": "Falling snowflakes against a dark blue night sky.",
-        "fire": "Rising fire particles with warm colors against a black background.",
-        "stars": "A starry night sky with twinkling stars.",
-        "connect": "An interactive network that responds to mouse movements and clicks."
-    }
-    return descriptions[preset_name]
+def _format_literal(value):
+    try:
+        return pprint.pformat(value, indent=4, width=100, sort_dicts=False)
+    except TypeError:
+        return pprint.pformat(value, indent=4, width=100)
 
 
-# Callback to load preset configuration
-@callback(
-    [Output("current-config", "data"),
-     Output({"type": "particle-control", "param": ALL}, "value")],
-    Input("particle-preset-dropdown", "value"),
-    State({"type": "particle-control", "param": ALL}, "id"),
-)
-def load_preset(preset_name, control_ids):
-    config = particle_configs[preset_name]
-
-    # Extract values for each control from the config
-    control_values = []
-    for control_id in control_ids:
-        param_path = control_id["param"].split(".")
-        value = config
-        try:
-            for key in param_path:
-                value = value[key]
-            control_values.append(value)
-        except (KeyError, TypeError):
-            # If path doesn't exist in config, use default value
-            control_values.append(None)
-
-    return config, control_values
+def _get_field_name(cls, key):
+    for field_info in fields(cls):
+        if field_info.name == "extra":
+            continue
+        if field_info.name == key or field_info.metadata.get("alias") == key:
+            return field_info.name
+    return None
 
 
-# Callback to apply changes from controls
-@callback(
-    [Output("particles-container", "children", allow_duplicate=True),
-     Output("current-config", "data", allow_duplicate=True)],
-    Input("apply-changes", "n_clicks"),
-    State({"type": "particle-control", "param": ALL}, "id"),
-    State({"type": "particle-control", "param": ALL}, "value"),
-    State("current-config", "data"),
-    prevent_initial_call=True
-)
-def apply_changes(n_clicks, control_ids, control_values, current_config):
-    if n_clicks > 0:
-        # Create a deep copy of the current config
-        updated_config = json.loads(json.dumps(current_config))
+def _format_assignment(name, value_str, indent):
+    indent_str = " " * indent
+    if "\n" not in value_str or value_str.lstrip().startswith("dp."):
+        return f"{indent_str}{name}={value_str},"
 
-        # Update config with values from controls
-        for i, control_id in enumerate(control_ids):
-            param_path = control_id["param"].split(".")
-            value = control_values[i]
+    return "\n".join(
+        [
+            f"{indent_str}{name}=(",
+            textwrap.indent(value_str, " " * (indent + 4)),
+            f"{indent_str}),",
+        ]
+    )
 
-            # Skip if value is None
-            if value is None:
-                continue
 
-            # Navigate to the right place in the config
-            config_section = updated_config
-            for j, key in enumerate(param_path):
-                if j == len(param_path) - 1:
-                    # Last key, set the value
-                    config_section[key] = value
-                else:
-                    # Create nested dict if it doesn't exist
-                    if key not in config_section:
-                        config_section[key] = {}
-                    config_section = config_section[key]
+def _format_range_value(value, indent):
+    lines = ["dp.RangeValue("]
+    for key in ("min", "max"):
+        if key in value:
+            lines.append(f"{' ' * (indent + 4)}{key}={_format_literal(value[key])},")
 
-        # Create a new DashParticles component with the updated configuration
-        particles = dash_particles.DashParticles(
-            id="particles-custom",
-            options=updated_config,
-            height="100%",
-            width="100%",
+    extra = {key: item for key, item in value.items() if key not in {"min", "max"}}
+    if extra:
+        lines.append(_format_assignment("extra", _format_literal(extra), indent + 4))
+
+    lines.append(f"{' ' * indent})")
+    return "\n".join(lines)
+
+
+def _format_structured_value(value, path, indent):
+    cls = STRUCTURED_CLASS_BY_PATH.get(path)
+    if cls is None:
+        return _format_literal(value)
+
+    lines = [f"dp.{_structured_class_name(path, cls)}("]
+    extra = {}
+
+    for key, item in value.items():
+        field_name = _get_field_name(cls, key)
+        if field_name is None:
+            extra[key] = item
+            continue
+
+        lines.append(
+            _format_assignment(
+                field_name,
+                _format_python_value(item, path + (key,), indent + 4),
+                indent + 4,
+            )
         )
 
-        return particles, updated_config
+    if extra:
+        lines.append(_format_assignment("extra", _format_literal(extra), indent + 4))
 
-    # Default return if button not clicked
-    return dash.no_update, dash.no_update
+    lines.append(f"{' ' * indent})")
+    return "\n".join(lines)
 
 
-# Callback to reset controls to current config
-@callback(
-    Output({"type": "particle-control", "param": ALL}, "value", allow_duplicate=True),
-    Input("reset-controls", "n_clicks"),
-    State("current-config", "data"),
-    State({"type": "particle-control", "param": ALL}, "id"),
-    prevent_initial_call=True
+def _format_python_value(value, path=(), indent=0):
+    if isinstance(value, list):
+        item_cls = STRUCTURED_LIST_ITEM_CLASS_BY_PATH.get(path)
+        if item_cls is not None:
+            lines = ["["]
+            for item in value:
+                if isinstance(item, dict):
+                    rendered_item = _format_structured_value(item, path + ("<item>",), indent + 4)
+                else:
+                    rendered_item = _format_literal(item)
+
+                lines.append(textwrap.indent(rendered_item, " " * (indent + 4)) + ",")
+            lines.append(f"{' ' * indent}]")
+            return "\n".join(lines)
+
+        return _format_literal(value)
+
+    if isinstance(value, dict):
+        if value and set(value).issubset({"min", "max"}):
+            return _format_range_value(value, indent)
+        return _format_structured_value(value, path, indent)
+
+    return _format_literal(value)
+
+
+def format_python_config(config):
+    """Render a serialized config dict back into structured `dp.*` code."""
+    return _format_python_value(config, (), 0)
+
+
+def _deepcopy_config(config):
+    return json.loads(json.dumps(config))
+
+
+def _config_fingerprint(config):
+    serialized = json.dumps(config, sort_keys=True)
+    return hashlib.md5(serialized.encode("utf-8")).hexdigest()[:12]
+
+
+def _get_nested(config, path, default=None):
+    value = config
+    try:
+        for key in path:
+            value = value[key]
+    except (KeyError, TypeError):
+        return default
+    return value
+
+
+def _set_nested(config, path, value):
+    section = config
+    for key in path[:-1]:
+        current = section.get(key)
+        if not isinstance(current, dict):
+            current = {}
+            section[key] = current
+        section = current
+    section[path[-1]] = value
+
+
+def _deep_merge_dicts(base, updates):
+    merged = _deepcopy_config(base)
+
+    for key, value in updates.items():
+        current = merged.get(key)
+        if isinstance(current, dict) and isinstance(value, dict):
+            merged[key] = _deep_merge_dicts(current, value)
+        else:
+            merged[key] = value
+
+    return merged
+
+
+def _ensure_mode_defaults(config, mode_name):
+    if mode_name == "none":
+        return
+
+    mode_defaults = INTERACTIVITY_MODE_DEFAULTS.get(mode_name)
+    if mode_defaults is None:
+        return
+
+    modes = config.setdefault("interactivity", {}).setdefault("modes", {})
+    existing = modes.get(mode_name)
+
+    if isinstance(existing, dict):
+        modes[mode_name] = _deep_merge_dicts(mode_defaults, existing)
+    else:
+        modes[mode_name] = _deepcopy_config(mode_defaults)
+
+
+def _coerce_color(value, fallback):
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return fallback
+
+
+def _normalize_color_value(value, fallback):
+    if isinstance(value, dict):
+        nested = value.get("value")
+        if isinstance(nested, str) and nested.strip():
+            return nested.strip()
+        if isinstance(nested, list):
+            for item in nested:
+                if isinstance(item, str) and item.strip():
+                    return item.strip()
+        return fallback
+
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, str) and item.strip():
+                return item.strip()
+        return fallback
+
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+
+    return fallback
+
+
+def _coerce_numeric(value, fallback):
+    if value is None:
+        return fallback
+    return value
+
+
+def _scalar_or_default(value, default):
+    if isinstance(value, dict):
+        return value.get("max", value.get("min", default))
+    if isinstance(value, list):
+        return value[0] if value else default
+    return value if value is not None else default
+
+
+def extract_editor_state(config):
+    """Extract the simple editor's control values from a serialized config."""
+    background_color = _get_nested(config, ["background", "color", "value"], "#0f172a")
+    particle_color = _get_nested(config, ["particles", "color", "value"], "#38bdf8")
+    link_color = _get_nested(config, ["particles", "links", "color"], particle_color)
+    background_color = _normalize_color_value(background_color, "#0f172a")
+    particle_color = _normalize_color_value(particle_color, "#38bdf8")
+    link_color = _normalize_color_value(link_color, particle_color)
+
+    return {
+        "background_color": background_color,
+        "particle_color": particle_color,
+        "link_color": link_color,
+        "particle_count": _coerce_numeric(
+            _get_nested(config, ["particles", "number", "value"], 80),
+            80,
+        ),
+        "particle_size": _scalar_or_default(_get_nested(config, ["particles", "size", "value"], 3), 3),
+        "particle_opacity": _scalar_or_default(_get_nested(config, ["particles", "opacity", "value"], 0.6), 0.6),
+        "move_speed": _coerce_numeric(_get_nested(config, ["particles", "move", "speed"], 1.5), 1.5),
+        "links_enabled": bool(_get_nested(config, ["particles", "links", "enable"], False)),
+        "hover_mode": _scalar_or_default(_get_nested(config, ["interactivity", "events", "onHover", "mode"], "none"), "none"),
+        "click_mode": _scalar_or_default(_get_nested(config, ["interactivity", "events", "onClick", "mode"], "none"), "none"),
+    }
+
+
+def apply_editor_overrides(
+    config,
+    background_color,
+    particle_color,
+    link_color,
+    particle_count,
+    particle_size,
+    particle_opacity,
+    move_speed,
+    links_enabled,
+    hover_mode,
+    click_mode,
+):
+    """Apply the simple editor's controls to a serialized config dict."""
+    updated = _deepcopy_config(config)
+
+    background_color = _coerce_color(background_color, "#0f172a")
+    particle_color = _coerce_color(particle_color, "#38bdf8")
+    link_color = _coerce_color(link_color, particle_color)
+
+    _set_nested(updated, ["background", "color", "value"], background_color)
+    _set_nested(updated, ["particles", "color", "value"], particle_color)
+    _set_nested(updated, ["particles", "number", "value"], particle_count)
+    _set_nested(updated, ["particles", "size", "value"], particle_size)
+    _set_nested(updated, ["particles", "opacity", "value"], particle_opacity)
+    _set_nested(updated, ["particles", "move", "enable"], True)
+    _set_nested(updated, ["particles", "move", "speed"], move_speed)
+    _set_nested(updated, ["particles", "links", "enable"], links_enabled)
+    _set_nested(updated, ["particles", "links", "color"], link_color)
+
+    _set_nested(updated, ["interactivity", "events", "onHover", "enable"], hover_mode != "none")
+    _set_nested(updated, ["interactivity", "events", "onHover", "mode"], hover_mode)
+    _set_nested(updated, ["interactivity", "events", "onClick", "enable"], click_mode != "none")
+    _set_nested(updated, ["interactivity", "events", "onClick", "mode"], click_mode)
+    _ensure_mode_defaults(updated, hover_mode)
+    _ensure_mode_defaults(updated, click_mode)
+
+    return updated
+
+
+def export_config_code(n_clicks, current_config_data):
+    if n_clicks <= 0 or not current_config_data:
+        return no_update, {"display": "none"}
+
+    config_py_str = format_python_config(current_config_data)
+    exported_code = f"""import dash_particles as dp
+
+particles = dp.DashParticles(
+    id="particles",
+    config=(
+{textwrap.indent(config_py_str, " " * 8)}
+    ),
+    height="100%",
+    width="100%",
 )
-def reset_controls(n_clicks, current_config, control_ids):
-    if n_clicks > 0:
-        # Extract values for each control from the current config
-        control_values = []
-        for control_id in control_ids:
-            param_path = control_id["param"].split(".")
-            value = current_config
-            try:
-                for key in param_path:
-                    value = value[key]
-                control_values.append(value)
-            except (KeyError, TypeError):
-                # If path doesn't exist in config, use None
-                control_values.append(None)
-
-        return control_values
-
-    # Default return if button not clicked
-    return dash.no_update
+"""
+    return exported_code, {"display": "block"}
 
 
-# Callback to export configuration as code
-@callback(
+def _build_example_summary(example_name):
+    metadata = example_catalog[example_name]
+    support_color = "#166534"
+    if "require" in metadata["support"].lower() or "may" in metadata["support"].lower():
+        support_color = "#92400e"
+
+    children = [
+        html.Div(
+            [
+                html.Span(
+                    metadata["source"],
+                    style={
+                        "display": "inline-block",
+                        "padding": "4px 10px",
+                        "borderRadius": "999px",
+                        "backgroundColor": "#e2e8f0",
+                        "fontSize": "12px",
+                        "fontWeight": "600",
+                    },
+                ),
+                html.Span(
+                    metadata["support"],
+                    style={
+                        "display": "inline-block",
+                        "marginLeft": "8px",
+                        "padding": "4px 10px",
+                        "borderRadius": "999px",
+                        "backgroundColor": "#fef3c7" if support_color != "#166534" else "#dcfce7",
+                        "color": support_color,
+                        "fontSize": "12px",
+                        "fontWeight": "600",
+                    },
+                ),
+            ],
+            style={"marginBottom": "12px"},
+        ),
+        html.H2(metadata["label"], style={"margin": "0 0 8px 0"}),
+        html.P(metadata["description"], style={"margin": "0 0 10px 0", "lineHeight": "1.6"}),
+    ]
+
+    if metadata["official_url"]:
+        children.append(
+            html.A(
+                "Open the matching official sample",
+                href=metadata["official_url"],
+                target="_blank",
+                style={"color": "#0f172a", "fontWeight": "600"},
+            )
+        )
+
+    return children
+
+
+def _load_example_payload(example_name):
+    config = _deepcopy_config(particle_configs[example_name])
+    editor_state = extract_editor_state(config)
+    return (
+        config,
+        json.dumps(config, indent=2),
+        _build_example_summary(example_name),
+        editor_state["background_color"],
+        editor_state["particle_color"],
+        editor_state["link_color"],
+        editor_state["particle_count"],
+        editor_state["particle_size"],
+        editor_state["particle_opacity"],
+        editor_state["move_speed"],
+        editor_state["links_enabled"],
+        editor_state["hover_mode"],
+        editor_state["click_mode"],
+        "",
+    )
+
+
+def _build_preview_component(config):
+    return dp.DashParticles(
+        id=f"particles-preview-{_config_fingerprint(config)}",
+        config=config,
+        full_screen=dp.FullScreen(enable=False, z_index=0),
+        height="100%",
+        width="100%",
+        style={"position": "absolute", "inset": 0, "zIndex": 0},
+    )
+
+
+app = dash.Dash(__name__, external_stylesheets=[FONT_AWESOME_STYLESHEET])
+
+app.layout = html.Div(
+    [
+        dcc.Store(id="current-config", data=_deepcopy_config(particle_configs["default"])),
+        html.Div(
+            [
+                html.H1("Dash Particles Helper"),
+                html.P(
+                    "Browse every packaged example, tweak the current background, inspect the JSON, and export structured Python code.",
+                    style={"margin": "8px 0 0 0", "maxWidth": "780px", "lineHeight": "1.6"},
+                ),
+                html.P(
+                    "The Font Awesome example works in this helper because the app preloads the Font Awesome stylesheet.",
+                    style={"margin": "8px 0 0 0", "maxWidth": "780px", "lineHeight": "1.6", "color": "#475569"},
+                ),
+            ],
+            style={"marginBottom": "24px"},
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Div(
+                            id="particles-preview-slot",
+                            children=_build_preview_component(_deepcopy_config(particle_configs["default"])),
+                            style={"position": "absolute", "inset": 0, "zIndex": 0},
+                        ),
+                        html.Div(
+                            id="example-summary",
+                            style={
+                                "position": "relative",
+                                "zIndex": 1,
+                                "maxWidth": "560px",
+                                "margin": "24px",
+                                "padding": "18px 20px",
+                                "backgroundColor": "rgba(255,255,255,0.84)",
+                                "borderRadius": "16px",
+                                "boxShadow": "0 18px 40px rgba(15, 23, 42, 0.18)",
+                            },
+                        ),
+                    ],
+                    style={
+                        "position": "relative",
+                        "height": "760px",
+                        "minHeight": "760px",
+                        "borderRadius": "20px",
+                        "overflow": "hidden",
+                        "backgroundColor": "#0f172a",
+                        "boxShadow": "0 30px 60px rgba(15, 23, 42, 0.2)",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H3("Example"),
+                                dcc.Dropdown(
+                                    id="example-dropdown",
+                                    options=[
+                                        {"label": metadata["label"], "value": key}
+                                        for key, metadata in example_catalog.items()
+                                    ],
+                                    value="default",
+                                    clearable=False,
+                                ),
+                                html.Button(
+                                    "Reset To Example",
+                                    id="reset-example",
+                                    n_clicks=0,
+                                    style={
+                                        "marginTop": "12px",
+                                        "padding": "10px 14px",
+                                        "border": "none",
+                                        "borderRadius": "10px",
+                                        "backgroundColor": "#0f172a",
+                                        "color": "white",
+                                        "cursor": "pointer",
+                                    },
+                                ),
+                            ],
+                            style={"marginBottom": "24px"},
+                        ),
+                        html.Div(
+                            [
+                                html.H3("Quick Tweaks"),
+                                html.Label("Background Color"),
+                                dcc.Input(
+                                    id="background-color",
+                                    type="text",
+                                    debounce=True,
+                                    placeholder=", ".join(COLOR_SUGGESTIONS[:3]),
+                                    style={"width": "100%"},
+                                ),
+                                html.Label("Particle Color", style={"marginTop": "12px"}),
+                                dcc.Input(
+                                    id="particle-color",
+                                    type="text",
+                                    debounce=True,
+                                    placeholder=", ".join(COLOR_SUGGESTIONS[3:6]),
+                                    style={"width": "100%"},
+                                ),
+                                html.Label("Link Color", style={"marginTop": "12px"}),
+                                dcc.Input(
+                                    id="link-color",
+                                    type="text",
+                                    debounce=True,
+                                    placeholder=", ".join(COLOR_SUGGESTIONS[6:9]),
+                                    style={"width": "100%"},
+                                ),
+                                html.Label("Particle Count", style={"marginTop": "14px"}),
+                                dcc.Slider(id="particle-count", min=0, max=240, step=4, marks={0: "0", 80: "80", 160: "160", 240: "240"}),
+                                html.Label("Particle Size", style={"marginTop": "14px"}),
+                                dcc.Slider(id="particle-size", min=1, max=40, step=1, marks={1: "1", 20: "20", 40: "40"}),
+                                html.Label("Opacity", style={"marginTop": "14px"}),
+                                dcc.Slider(id="particle-opacity", min=0.1, max=1, step=0.05, marks={0.1: "0.1", 0.5: "0.5", 1: "1.0"}),
+                                html.Label("Speed", style={"marginTop": "14px"}),
+                                dcc.Slider(id="move-speed", min=0, max=8, step=0.1, marks={0: "0", 2: "2", 4: "4", 8: "8"}),
+                                html.Label("Links", style={"marginTop": "14px"}),
+                                dcc.RadioItems(
+                                    id="links-enabled",
+                                    options=[
+                                        {"label": "Enabled", "value": True},
+                                        {"label": "Disabled", "value": False},
+                                    ],
+                                    inline=True,
+                                ),
+                                html.Label("Hover Mode", style={"marginTop": "14px"}),
+                                dcc.Dropdown(id="hover-mode", options=HOVER_MODE_OPTIONS, clearable=False),
+                                html.Label("Click Mode", style={"marginTop": "14px"}),
+                                dcc.Dropdown(id="click-mode", options=CLICK_MODE_OPTIONS, clearable=False),
+                                html.Button(
+                                    "Apply Quick Tweaks",
+                                    id="apply-controls",
+                                    n_clicks=0,
+                                    style={
+                                        "marginTop": "16px",
+                                        "padding": "10px 14px",
+                                        "border": "none",
+                                        "borderRadius": "10px",
+                                        "backgroundColor": "#2563eb",
+                                        "color": "white",
+                                        "cursor": "pointer",
+                                    },
+                                ),
+                            ],
+                            style={"marginBottom": "28px"},
+                        ),
+                        html.Div(
+                            [
+                                html.H3("Raw JSON Config"),
+                                html.P(
+                                    "Use this when the quick editor is not enough. Paste a serialized config dict, then apply it.",
+                                    style={"fontSize": "14px", "lineHeight": "1.6"},
+                                ),
+                                dcc.Textarea(
+                                    id="config-json",
+                                    style={"width": "100%", "height": "260px", "fontFamily": "monospace"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Button(
+                                            "Apply JSON",
+                                            id="apply-json",
+                                            n_clicks=0,
+                                            style={
+                                                "padding": "10px 14px",
+                                                "border": "none",
+                                                "borderRadius": "10px",
+                                                "backgroundColor": "#16a34a",
+                                                "color": "white",
+                                                "cursor": "pointer",
+                                                "marginRight": "10px",
+                                            },
+                                        ),
+                                        html.Button(
+                                            "Export Component Code",
+                                            id="export-config-button",
+                                            n_clicks=0,
+                                            style={
+                                                "padding": "10px 14px",
+                                                "border": "none",
+                                                "borderRadius": "10px",
+                                                "backgroundColor": "#9333ea",
+                                                "color": "white",
+                                                "cursor": "pointer",
+                                            },
+                                        ),
+                                    ],
+                                    style={"marginTop": "12px"},
+                                ),
+                                html.Div(id="json-status", style={"marginTop": "12px", "fontSize": "14px"}),
+                            ],
+                            style={"marginBottom": "28px"},
+                        ),
+                        html.Div(
+                            [
+                                html.H3("Structured Python Preview"),
+                                dcc.Textarea(
+                                    id="python-config-output",
+                                    readOnly=True,
+                                    style={"width": "100%", "height": "260px", "fontFamily": "monospace"},
+                                ),
+                            ],
+                            style={"marginBottom": "28px"},
+                        ),
+                        html.Div(
+                            [
+                                html.H3("Exported Component Snippet"),
+                                html.Div(
+                                    id="export-output-container",
+                                    style={"display": "none"},
+                                    children=[
+                                        dcc.Textarea(
+                                            id="export-code-output",
+                                            readOnly=True,
+                                            style={"width": "100%", "height": "220px", "fontFamily": "monospace"},
+                                        )
+                                    ],
+                                ),
+                            ]
+                        ),
+                    ],
+                    style={
+                        "padding": "24px",
+                        "backgroundColor": "#f8fafc",
+                        "borderRadius": "20px",
+                        "boxShadow": "0 18px 40px rgba(15, 23, 42, 0.08)",
+                        "position": "relative",
+                        "zIndex": 3,
+                    },
+                ),
+            ],
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "minmax(0, 1.4fr) minmax(320px, 520px)",
+                "gap": "24px",
+                "alignItems": "start",
+                "position": "relative",
+                "isolation": "isolate",
+            },
+        ),
+    ],
+    style={"padding": "24px", "minHeight": "100vh", "backgroundColor": "#e2e8f0"},
+)
+
+
+@app.callback(
+    Output("current-config", "data"),
+    Output("config-json", "value"),
+    Output("example-summary", "children"),
+    Output("background-color", "value"),
+    Output("particle-color", "value"),
+    Output("link-color", "value"),
+    Output("particle-count", "value"),
+    Output("particle-size", "value"),
+    Output("particle-opacity", "value"),
+    Output("move-speed", "value"),
+    Output("links-enabled", "value"),
+    Output("hover-mode", "value"),
+    Output("click-mode", "value"),
+    Output("json-status", "children"),
+    Input("example-dropdown", "value"),
+    Input("reset-example", "n_clicks"),
+)
+def load_example(example_name, _reset_clicks):
+    return _load_example_payload(example_name)
+
+
+@app.callback(
+    Output("particles-preview-slot", "children"),
+    Output("python-config-output", "value"),
+    Input("current-config", "data"),
+)
+def render_preview(current_config):
+    return (
+        _build_preview_component(current_config),
+        format_python_config(current_config),
+    )
+
+
+@app.callback(
+    Output("current-config", "data", allow_duplicate=True),
+    Output("config-json", "value", allow_duplicate=True),
+    Output("json-status", "children", allow_duplicate=True),
+    Input("apply-controls", "n_clicks"),
+    State("current-config", "data"),
+    State("background-color", "value"),
+    State("particle-color", "value"),
+    State("link-color", "value"),
+    State("particle-count", "value"),
+    State("particle-size", "value"),
+    State("particle-opacity", "value"),
+    State("move-speed", "value"),
+    State("links-enabled", "value"),
+    State("hover-mode", "value"),
+    State("click-mode", "value"),
+    prevent_initial_call=True,
+)
+def apply_controls(
+    n_clicks,
+    current_config,
+    background_color,
+    particle_color,
+    link_color,
+    particle_count,
+    particle_size,
+    particle_opacity,
+    move_speed,
+    links_enabled,
+    hover_mode,
+    click_mode,
+):
+    if n_clicks <= 0:
+        return no_update, no_update, no_update
+
+    updated = apply_editor_overrides(
+        current_config,
+        background_color,
+        particle_color,
+        link_color,
+        particle_count,
+        particle_size,
+        particle_opacity,
+        move_speed,
+        links_enabled,
+        hover_mode,
+        click_mode,
+    )
+    return updated, json.dumps(updated, indent=2), "Quick tweaks applied."
+
+
+@app.callback(
+    Output("current-config", "data", allow_duplicate=True),
+    Output("json-status", "children", allow_duplicate=True),
+    Input("apply-json", "n_clicks"),
+    State("config-json", "value"),
+    prevent_initial_call=True,
+)
+def apply_json_editor(n_clicks, config_text):
+    if n_clicks <= 0:
+        return no_update, no_update
+
+    try:
+        parsed = json.loads(config_text)
+    except json.JSONDecodeError as error:
+        return no_update, f"JSON error: {error.msg} (line {error.lineno}, column {error.colno})"
+
+    if not isinstance(parsed, dict):
+        return no_update, "The JSON editor expects a single config object at the top level."
+
+    return parsed, "JSON config applied."
+
+
+@app.callback(
+    Output("background-color", "value", allow_duplicate=True),
+    Output("particle-color", "value", allow_duplicate=True),
+    Output("link-color", "value", allow_duplicate=True),
+    Output("particle-count", "value", allow_duplicate=True),
+    Output("particle-size", "value", allow_duplicate=True),
+    Output("particle-opacity", "value", allow_duplicate=True),
+    Output("move-speed", "value", allow_duplicate=True),
+    Output("links-enabled", "value", allow_duplicate=True),
+    Output("hover-mode", "value", allow_duplicate=True),
+    Output("click-mode", "value", allow_duplicate=True),
+    Input("current-config", "data"),
+    prevent_initial_call=True,
+)
+def sync_controls_from_config(current_config):
+    state = extract_editor_state(current_config)
+    return (
+        state["background_color"],
+        state["particle_color"],
+        state["link_color"],
+        state["particle_count"],
+        state["particle_size"],
+        state["particle_opacity"],
+        state["move_speed"],
+        state["links_enabled"],
+        state["hover_mode"],
+        state["click_mode"],
+    )
+
+
+@app.callback(
     Output("export-code-output", "value"),
     Output("export-output-container", "style"),
     Input("export-config-button", "n_clicks"),
     State("current-config", "data"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
-def export_config_code(n_clicks, current_config_data):
-    if n_clicks > 0 and current_config_data:
-        # Format the dictionary string using pprint
-        # Use sort_dicts=False if Python version supports it and order is preferred
-        # (dict key order is preserved in Python 3.7+)
-        try:
-            config_py_str = pprint.pformat(current_config_data, indent=4, width=100, sort_dicts=False)
-        except TypeError:  # sort_dicts might not be available in older Python versions
-            config_py_str = pprint.pformat(current_config_data, indent=4, width=100)
-
-        exported_code = f"""
-# 1. Make sure to import dash_particles:
-# import dash_particles
-
-# 2. Here is the component code with your current configuration:
-
-your_particles_component = dash_particles.DashParticles(
-    id="particles-initial", # You can change this ID
-    options={config_py_str},
-    height="100%", # Adjust as needed
-    width="100%"   # Adjust as needed
-)
-
-# 3. You can then add 'your_particles_component' to your Dash app's layout.
-# For example:
-#
-# from dash import html # Assuming you use html.Div or similar
-#
-# # app.layout = html.Div([
-# #     html.H1("My Page with Particles"),
-# #     # If your page content needs to be above particles, ensure proper z-indexing
-# #     # and positioning. For a background effect, the particle container might
-# #     # need absolute positioning and a lower z-index.
-# #
-# #     # Example: Particles as a background for the whole page
-# #     html.Div(style={{
-# #         "position": "fixed", # Use "fixed" for viewport-relative positioning
-# #         "top": 0,
-# #         "left": 0,
-# #         "width": "100%",
-# #         "height": "100%",
-# #         "zIndex": -1 # Ensure it's behind other content
-# #     }}, children=[your_particles_component]),
-# #     
-# #     # Your foreground content (ensure it has a higher z-index or is in a new stacking context)
-# #     html.Div(style={{"position": "relative", "zIndex": 1}}, children=[
-# #         # html.H1("Content on top!"),
-# #         # ... your main page content ...
-# #     ])
-# # ])
-"""
-        return exported_code, {"display": "block", "marginTop": "20px"}
-
-    # If button not clicked or no data, keep textarea hidden and its content unchanged
-    return dash.no_update, {"display": "none", "marginTop": "20px"}
+def handle_export_config(n_clicks, current_config_data):
+    return export_config_code(n_clicks, current_config_data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
