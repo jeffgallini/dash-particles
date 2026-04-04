@@ -1,4 +1,4 @@
-# dash-particles
+# Dash Particles `dash-particles`
 
 `dash-particles` is a Dash component library for tsParticles backgrounds with a
 structured Python API. The actual Python package, docs, demo app, and release
