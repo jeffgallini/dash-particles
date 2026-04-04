@@ -1,12 +1,8 @@
 {
   "dependencies": {
-    "@tsparticles/all": "^3.8.1",
-    "@tsparticles/basic": "^3.8.1",
-    "@tsparticles/engine": "^3.8.1",
-    "@tsparticles/react": "^3.0.0",
-    "@tsparticles/slim": "^3.8.1",
-    "tsparticles": "^3.8.1",
-    "tsparticles-engine": "^2.12.0",
-    "tsparticles-slim": "^2.12.0"
+    "@tsparticles/engine": "^3.9.1",
+    "@tsparticles/interaction-external-pop": "^3.9.1",
+    "@tsparticles/plugin-canvas-mask": "^3.9.1",
+    "tsparticles": "^3.9.1"
   }
 }

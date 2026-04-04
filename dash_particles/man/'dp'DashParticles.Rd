@@ -6,7 +6,7 @@
 \title{DashParticles component}
 
 \description{
-DashParticles is a Dash component that renders interactive particle animations. This implementation uses vanilla tsParticles for better compatibility with Dash.
+DashParticles renders a tsParticles canvas inside Dash.  The package currently loads the `tsparticles` full runtime bundle plus the extra plugins needed for click-pop interactions, image shapes, text shapes, and canvas masks.
 }
 
 \usage{
@@ -21,8 +21,12 @@ particlesLoaded=NULL, style=NULL, width=NULL)
 
 \item{height}{Character. Height of the particles container. Can be any valid CSS dimension value.}
 
-\item{options}{Named list. Configuration options for the particles.
-See https://particles.js.org for documentation on available options.}
+\item{options}{Named list. tsParticles options for the canvas.
+
+This package currently ships with the `tsparticles` full bundle plus the
+click-pop, image-shape, text-shape, and canvas-mask plugins. That covers
+examples such as Among Us and Font Awesome out of the box. More exotic
+plugins can still require additional frontend work.}
 
 \item{particlesLoaded}{Logical. Boolean flag indicating if particles have been loaded.
 This is a read-only prop updated by the component.}

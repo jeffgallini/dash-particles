@@ -1,7 +1,7 @@
 Package: dashParticles
-Title: This is Particles.js, but in Dash!
-Version: 0.0.1
-Description: This is Particles.js, but in Dash!
+Title: Structured tsParticles backgrounds for Dash applications
+Version: 0.0.2
+Description: Structured tsParticles backgrounds for Dash applications
 Depends: R (>= 3.0.2)
 Imports: 
 Suggests: 
