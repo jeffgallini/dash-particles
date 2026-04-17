@@ -32,7 +32,7 @@ app.layout = html.Div(
 )
 ```
 
-## What v0.0.2 Focuses On
+## What v0.0.3 Focuses On
 
 - A structured config model based on `dp.Options(...)` instead of one giant dict
 - Curated `dp.presets.*` helpers for faster starts
