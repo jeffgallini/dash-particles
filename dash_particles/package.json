@@ -1,6 +1,6 @@
 {
   "name": "dash_particles",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Structured tsParticles backgrounds for Dash applications",
   "repository": {
     "type": "git",
