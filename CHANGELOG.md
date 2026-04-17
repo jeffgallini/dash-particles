@@ -1,4 +1,9 @@
 # Changelog
+
+# 0.0.1
+
+- Initial release of tsParticles, but in Dash!
+
 # 0.0.2
 
 - Added a structured Python config API for `DashParticles` with composable helper classes like `Background`, `Particles`, `Interactivity`, and `Options`.
