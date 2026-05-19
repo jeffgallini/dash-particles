@@ -1,5 +1,13 @@
 # Changelog
 
+# 1.0.0
+
+- Promoted the Python package to the stable `v1.0.0` release.
+- Stabilized the Python-first config API around `dp.Options(...)`, structured helper classes, and `dp.presets.*`.
+- Documented runtime auto-loading for packaged basic, slim, and full tsParticles tiers.
+- Refreshed release documentation, getting-started paths, and support-boundary notes for the stable release.
+- Preserved compatibility for raw dict configs through `config={...}` and legacy `options={...}` usage.
+
 # 0.0.1
 
 - Initial release of tsParticles, but in Dash!

@@ -1,6 +1,6 @@
 {
   "name": "dash_particles",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "description": "Structured tsParticles backgrounds for Dash applications",
   "repository": {
     "type": "git",
@@ -24,9 +24,11 @@
   "author": "Jeff Gallini <gallinij@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@tsparticles/basic": "^3.9.1",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/interaction-external-pop": "^3.9.1",
     "@tsparticles/plugin-canvas-mask": "^3.9.1",
+    "@tsparticles/slim": "^3.9.1",
     "prop-types": "^15.8.1",
     "ramda": "^0.26.1",
     "tsparticles": "^3.9.1"

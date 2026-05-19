@@ -41,8 +41,8 @@ def test_readme_documents_presets_and_runtime_boundary():
     readme = README_PATH.read_text(encoding="utf-8")
 
     assert "dp.presets.*" in readme
-    assert "tsparticles" in readme
-    assert "full JavaScript bundle" in readme
+    assert "tsParticles" in readme
+    assert "auto-loads the smallest packaged tsParticles runtime tier" in readme
 
 
 def test_recipes_include_official_sample_inspired_examples():

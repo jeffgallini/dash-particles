@@ -32,7 +32,8 @@ app.layout = html.Div(
 )
 ```
 
-## What v0.0.3 Focuses On
+## What v1.0.0 Focuses On
 
-- A structured config model based on `dp.Options(...)` instead of one giant dict
+- A stable Python-first config model based on `dp.Options(...)` instead of one giant dict
 - Curated `dp.presets.*` helpers for faster starts
+- Packaged runtime tiers that auto-load the smallest tsParticles bundle needed by each scene

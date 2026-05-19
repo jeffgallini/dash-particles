@@ -1,6 +1,5 @@
 # AUTO GENERATED FILE - DO NOT EDIT
 
-from dataclasses import fields as _dataclass_fields
 import typing  # noqa: F401
 import numbers # noqa: F401
 from typing_extensions import TypedDict, NotRequired, Literal # noqa: F401
@@ -9,6 +8,8 @@ try:
     from dash.development.base_component import ComponentType # noqa: F401
 except ImportError:
     ComponentType = typing.TypeVar("ComponentType", bound=Component)
+
+from dataclasses import fields as _dataclass_fields
 
 from .options import ParticlesOptions as _ParticlesOptions
 from .options import merge_options as _merge_options
@@ -60,9 +61,9 @@ class DashParticles(Component):
     """A DashParticles component.
 DashParticles renders a tsParticles canvas inside Dash.
 
-The package currently loads the `tsparticles` full runtime bundle plus the
-extra plugins needed for click-pop interactions, image shapes, text shapes,
-and canvas masks.
+The component automatically loads the smallest tsParticles runtime tier it
+can infer from the provided options, and falls back to the full runtime when
+a more specialized plugin is needed.
 
 Keyword arguments:
 
@@ -77,20 +78,21 @@ Keyword arguments:
     value.
 
 - options (dict; optional):
-    tsParticles options for the canvas.  This package currently ships
-    with the `tsparticles` full bundle plus the click-pop,
-    image-shape, text-shape, and canvas-mask plugins. That covers
-    examples such as Among Us and Font Awesome out of the box. More
-    exotic plugins can still require additional frontend work.
+    tsParticles options for the canvas.
 
 - particlesLoaded (boolean; optional):
     Boolean flag indicating if particles have been loaded.  This is a
     read-only prop updated by the component.
 
+- runtime (a value equal to: 'auto', 'basic', 'slim', 'full'; default 'auto'):
+    tsParticles runtime tier to load. Use \"auto\" to infer the
+    smallest runtime from the options, or force \"basic\", \"slim\",
+    or \"full\".
+
 - width (string; default '100%'):
     Width of the particles container. Can be any valid CSS dimension
     value."""
-    _children_props = []
+    _children_props: typing.List[str] = []
     _base_nodes = ['children']
     _namespace = 'dash_particles'
     _type = 'DashParticles'
@@ -100,6 +102,7 @@ Keyword arguments:
         self,
         id: typing.Optional[typing.Union[str, dict]] = None,
         options: typing.Optional[dict] = None,
+        runtime: typing.Optional[Literal["auto", "basic", "slim", "full"]] = None,
         height: typing.Optional[str] = None,
         width: typing.Optional[str] = None,
         className: typing.Optional[str] = None,
@@ -107,9 +110,9 @@ Keyword arguments:
         particlesLoaded: typing.Optional[bool] = None,
         **kwargs
     ):
-        self._prop_names = ['id', 'className', 'height', 'options', 'particlesLoaded', 'style', 'width']
+        self._prop_names = ['id', 'className', 'height', 'options', 'particlesLoaded', 'runtime', 'style', 'width']
         self._valid_wildcard_attributes =            []
-        self.available_properties = ['id', 'className', 'height', 'options', 'particlesLoaded', 'style', 'width']
+        self.available_properties = ['id', 'className', 'height', 'options', 'particlesLoaded', 'runtime', 'style', 'width']
         self.available_wildcard_properties =            []
         _explicit_args = kwargs.pop('_explicit_args')
         options, _explicit_args = _resolve_options(options, kwargs, _explicit_args)

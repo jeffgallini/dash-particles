@@ -6,12 +6,12 @@
 \title{DashParticles component}
 
 \description{
-DashParticles renders a tsParticles canvas inside Dash.  The package currently loads the `tsparticles` full runtime bundle plus the extra plugins needed for click-pop interactions, image shapes, text shapes, and canvas masks.
+DashParticles renders a tsParticles canvas inside Dash.  The component automatically loads the smallest tsParticles runtime tier it can infer from the provided options, and falls back to the full runtime when a more specialized plugin is needed.
 }
 
 \usage{
 'dp'DashParticles(id=NULL, className=NULL, height=NULL, options=NULL,
-particlesLoaded=NULL, style=NULL, width=NULL)
+particlesLoaded=NULL, runtime=NULL, style=NULL, width=NULL)
 }
 
 \arguments{
@@ -21,15 +21,13 @@ particlesLoaded=NULL, style=NULL, width=NULL)
 
 \item{height}{Character. Height of the particles container. Can be any valid CSS dimension value.}
 
-\item{options}{Named list. tsParticles options for the canvas.
-
-This package currently ships with the `tsparticles` full bundle plus the
-click-pop, image-shape, text-shape, and canvas-mask plugins. That covers
-examples such as Among Us and Font Awesome out of the box. More exotic
-plugins can still require additional frontend work.}
+\item{options}{Named list. tsParticles options for the canvas.}
 
 \item{particlesLoaded}{Logical. Boolean flag indicating if particles have been loaded.
 This is a read-only prop updated by the component.}
+
+\item{runtime}{A value equal to: 'auto', 'basic', 'slim', 'full'. tsParticles runtime tier to load. Use "auto" to infer the smallest
+runtime from the options, or force "basic", "slim", or "full".}
 
 \item{style}{Named list. Additional inline styles for the container div.}
 

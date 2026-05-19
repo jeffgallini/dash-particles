@@ -22,6 +22,8 @@ Instead of building one giant nested dict, you can compose configs with
 pip install dash-particles
 ```
 
+The current stable Python package release is `v1.0.0`.
+
 ## 60-Second Quickstart
 
 This is the fastest path to a visible background while still showing the
@@ -185,6 +187,7 @@ hero_particles = dp.DashParticles(
 | Use case | Main helpers |
 |----------|--------------|
 | Render the component | `dp.DashParticles(...)` |
+| Runtime loading | `runtime="auto"` (default), `runtime="basic"`, `runtime="slim"`, `runtime="full"` |
 | Top-level config object | `dp.Options(...)` / `dp.ParticlesOptions(...)` |
 | Presets | `dp.presets.default()`, `dp.presets.stars()`, `dp.presets.connect()`, `dp.presets.among_us()`, `dp.presets.fontawesome()`, `dp.presets.blurred_particles()`, `dp.presets.hypno_squares()` |
 | Background color and layout | `dp.Background`, `dp.BackgroundMask`, `dp.BackgroundMaskCover`, `dp.Color`, `dp.FullScreen` |
@@ -196,15 +199,18 @@ hero_particles = dp.DashParticles(
 
 ## Support Boundaries
 
-`dash-particles` currently ships with the `tsparticles` full JavaScript bundle
-plus the image-shape, text-shape, and canvas-mask plugins.
+`dash-particles` auto-loads the smallest packaged tsParticles runtime tier it
+can infer from your config. Simple scenes use the lighter basic or slim runtime,
+while configs that need emitters, text or character particles, canvas masks, or
+click-pop interactions load the full runtime chunk on demand.
 
 - The structured Python API is the default and recommended way to author configs.
 - Raw dicts remain supported through `config={...}` and `options={...}`.
 - `extra={...}` is the escape hatch for tsParticles keys that do not yet have a dedicated Python helper.
-- `extra` and raw dicts do not load missing JavaScript plugins by themselves.
-- Common advanced features like `emitters`, `backgroundMask`, `canvasMask`, and Font Awesome or character-style particles now work with the shipped bundle.
-- The bundled presets cover emitters, image particles, background masks, character particles, themeable blur effects, and animated geometric effects through the shipped runtime.
+- `extra` and raw dicts can select packaged runtime tiers, but they do not load plugins outside the package.
+- Common advanced features like `emitters`, `backgroundMask`, `canvasMask`, and Font Awesome or character-style particles work with the packaged full tier.
+- The bundled presets cover emitters, image particles, background masks, character particles, themeable blur effects, and animated geometric effects through auto runtime selection.
+- Use `runtime="full"` when you want to force the broadest packaged runtime instead of relying on automatic detection.
 
 ## Compatibility And Precedence
 
@@ -212,7 +218,7 @@ plus the image-shape, text-shape, and canvas-mask plugins.
 - `options=` is still supported for backward compatibility, but new code should prefer `config=`.
 - `options=` and `config=` cannot be used together in the same component call.
 - Explicit top-level sections like `particles=...`, `background=...`, or `full_screen=...` override overlapping keys from `config=`.
-- Use `extra={...}` on any structured config object for unsupported tsParticles keys inside the current runtime bundle.
+- Use `extra={...}` on any structured config object for unsupported tsParticles keys inside the packaged runtime tiers.
 
 Example escape hatch:
 

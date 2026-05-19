@@ -107,6 +107,7 @@ _current_path = _os.path.dirname(_os.path.abspath(__file__))
 _this_module = _sys.modules[__name__]
 
 async_resources = ["DashParticles"]
+dynamic_js_files = ["async-tsparticles-full.js", "dash_particles-shared.js"]
 
 _js_dist = []
 
@@ -128,6 +129,21 @@ _js_dist.extend(
 _js_dist.extend(
     [
         {
+            "relative_package_path": dynamic_js_file,
+            "external_url": (
+                f"https://unpkg.com/{package_name}@{__version__}"
+                f"/{__name__}/{dynamic_js_file}"
+            ),
+            "namespace": package_name,
+            "dynamic": True,
+        }
+        for dynamic_js_file in dynamic_js_files
+    ]
+)
+
+_js_dist.extend(
+    [
+        {
             "relative_package_path": f"async-{async_resource}.js.map",
             "external_url": (
                 f"https://unpkg.com/{package_name}@{__version__}"
@@ -137,6 +153,21 @@ _js_dist.extend(
             "dynamic": True,
         }
         for async_resource in async_resources
+    ]
+)
+
+_js_dist.extend(
+    [
+        {
+            "relative_package_path": f"{dynamic_js_file}.map",
+            "external_url": (
+                f"https://unpkg.com/{package_name}@{__version__}"
+                f"/{__name__}/{dynamic_js_file}.map"
+            ),
+            "namespace": package_name,
+            "dynamic": True,
+        }
+        for dynamic_js_file in dynamic_js_files
     ]
 )
 

@@ -1,5 +1,12 @@
 include dash_particles/dash_particles.min.js
 include dash_particles/dash_particles.min.js.map
+include dash_particles/async-DashParticles.js
+include dash_particles/async-DashParticles.js.map
+include dash_particles/async-DashParticles.js.LICENSE.txt
+include dash_particles/async-tsparticles-full.js
+include dash_particles/async-tsparticles-full.js.map
+include dash_particles/dash_particles-shared.js
+include dash_particles/dash_particles-shared.js.map
 include dash_particles/async-*.js
 include dash_particles/async-*.js.map
 include dash_particles/*-shared.js

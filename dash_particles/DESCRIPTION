@@ -1,6 +1,6 @@
 Package: dashParticles
 Title: Structured tsParticles backgrounds for Dash applications
-Version: 0.0.2
+Version: 1.0.0
 Description: Structured tsParticles backgrounds for Dash applications
 Depends: R (>= 3.0.2)
 Imports: 

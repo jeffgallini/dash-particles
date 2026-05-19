@@ -161,7 +161,7 @@ Inspired by the official sample:
 <https://particles.js.org/samples/index.html#amongUs>
 
 This style uses image-shaped particles, which fits well with the current
-structured API, and the shipped full runtime also supports the emitter-based
+structured API. Auto runtime selection loads the full tier for the emitter-based
 version of the official sample.
 
 ```python
@@ -225,8 +225,8 @@ config = dp.presets.parallax()
 Inspired by the official sample:
 <https://particles.js.org/samples/index.html#fontawesome>
 
-This works with the shipped full runtime. The remaining requirement is that the
-Font Awesome font itself must be available on the page.
+Auto runtime selection loads the full tier for character particles. The remaining
+requirement is that the Font Awesome font itself must be available on the page.
 
 ```python
 import dash_particles as dp

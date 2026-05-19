@@ -13,6 +13,33 @@ from usage import (
 )
 
 
+def _find_component_by_id(component, component_id):
+    if getattr(component, "id", None) == component_id:
+        return component
+
+    children = getattr(component, "children", None)
+    if isinstance(children, (list, tuple)):
+        for child in children:
+            found = _find_component_by_id(child, component_id)
+            if found is not None:
+                return found
+    elif children is not None:
+        return _find_component_by_id(children, component_id)
+
+    return None
+
+
+def _iter_components(component):
+    yield component
+
+    children = getattr(component, "children", None)
+    if isinstance(children, (list, tuple)):
+        for child in children:
+            yield from _iter_components(child)
+    elif children is not None:
+        yield from _iter_components(children)
+
+
 def _has_empty_selector_object(value):
     if isinstance(value, dict):
         if value.get("selectors") == {}:
@@ -27,6 +54,39 @@ def _has_empty_selector_object(value):
 
 def test_usage_app_layout_exists():
     assert app.layout is not None
+
+
+def test_usage_initial_layout_seeds_editor_control_values():
+    state = extract_editor_state(particle_configs["default"])
+    expected_values = {
+        "background-color": state["background_color"],
+        "particle-color": state["particle_color"],
+        "link-color": state["link_color"],
+        "particle-count": state["particle_count"],
+        "particle-size": state["particle_size"],
+        "particle-opacity": state["particle_opacity"],
+        "move-speed": state["move_speed"],
+        "links-enabled": state["links_enabled"],
+        "hover-mode": state["hover_mode"],
+        "click-mode": state["click_mode"],
+    }
+
+    for component_id, expected_value in expected_values.items():
+        component = _find_component_by_id(app.layout, component_id)
+
+        assert component is not None
+        assert component.value == expected_value
+
+
+def test_usage_layout_uses_dropdown_selectors():
+    dropdowns = {
+        component.id: component
+        for component in _iter_components(app.layout)
+        if type(component).__name__ == "Dropdown"
+    }
+
+    assert {"example-dropdown", "hover-mode", "click-mode"}.issubset(dropdowns)
+    assert all(not dropdown.clearable for dropdown in dropdowns.values())
 
 
 def test_usage_includes_packaged_presets_and_official_examples():
@@ -71,7 +131,7 @@ def test_usage_mode_controls_match_documented_click_and_hover_modes():
     }
 
 
-def test_usage_full_runtime_examples_have_expected_keys():
+def test_usage_advanced_runtime_examples_have_expected_keys():
     assert particle_configs["fontawesome"]["particles"]["shape"]["type"] == "char"
     assert particle_configs["fontawesome"]["key"] == "fontawesome"
     assert particle_configs["blurred_particles"]["key"] == "blurredParticles"
@@ -209,14 +269,15 @@ def test_usage_selected_presets_default_hover_mode_to_none():
         }
 
 
-def test_usage_preview_component_remounts_for_new_config():
+def test_usage_preview_component_reuses_existing_canvas_for_new_config():
     first_component, _ = render_preview(particle_configs["default"])
     second_component, _ = render_preview(particle_configs["parallax"])
 
     assert _config_fingerprint(particle_configs["default"]) != _config_fingerprint(
         particle_configs["parallax"]
     )
-    assert first_component.id != second_component.id
+    assert first_component.id == second_component.id == "particles-preview"
+    assert first_component.options != second_component.options
 
 
 def test_usage_preview_forces_embedded_mode_for_fullscreen_presets():

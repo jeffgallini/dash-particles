@@ -26,16 +26,18 @@ your callback output. This is the clearest pattern and matches the demo app in
 ## The Config Serializes Fine but a Feature Still Does Not Work
 
 This usually means the option needs a tsParticles plugin that is not part of the
-current frontend runtime.
+packaged frontend runtime tiers.
 
-`dash-particles` currently ships with the `tsparticles` full bundle.
+`dash-particles` auto-selects between packaged basic, slim, and full
+tsParticles runtime tiers. Simple configs stay on lighter tiers; advanced
+configs load the full tier on demand.
 
 - Common core features work directly
-- Emitters, image particles, themeable blur effects, animated geometric presets, background masks, and Font Awesome or character-style particle examples are supported by the shipped runtime
+- Emitters, image particles, themeable blur effects, animated geometric presets, background masks, and Font Awesome or character-style particle examples are supported by the packaged full tier
 - Polygon-mask scenes still need the separate polygon-mask frontend plugin
 - `extra={...}` can help with missing Python helper coverage
-- `extra` does not load missing JavaScript plugins
-- Features outside the documented preset surface may still need additional frontend runtime work beyond the shipped bundle
+- `extra` does not load JavaScript plugins outside the package
+- Features outside the documented preset surface may still need additional frontend runtime work beyond the packaged tiers
 
 ## I Need a tsParticles Key That Does Not Have a Python Helper Yet
 
@@ -52,7 +54,7 @@ config = dp.Options(
 )
 ```
 
-If it proves useful and works within the shipped runtime, it is a good candidate
+If it proves useful and works within the packaged runtime tiers, it is a good candidate
 for a first-class helper in a future version.
 
 ## Performance Feels Heavy
@@ -63,6 +65,7 @@ Try these first:
 - disable `links`
 - lower `move.speed`
 - reduce hover or click interactivity
+- keep `runtime="auto"` unless you specifically need to force `runtime="full"`
 - enable `pause_on_blur` and `pause_on_outside_viewport`
 
 ## Legacy Dict Interop

@@ -1,9 +1,9 @@
 # AUTO GENERATED FILE - DO NOT EDIT
 
 #' @export
-'dp'DashParticles <- function(id=NULL, className=NULL, height=NULL, options=NULL, particlesLoaded=NULL, style=NULL, width=NULL) {
+'dp'DashParticles <- function(id=NULL, className=NULL, height=NULL, options=NULL, particlesLoaded=NULL, runtime=NULL, style=NULL, width=NULL) {
     
-    props <- list(id=id, className=className, height=height, options=options, particlesLoaded=particlesLoaded, style=style, width=width)
+    props <- list(id=id, className=className, height=height, options=options, particlesLoaded=particlesLoaded, runtime=runtime, style=style, width=width)
     if (length(props) > 0) {
         props <- props[!vapply(props, is.null, logical(1))]
     }
@@ -11,7 +11,7 @@
         props = props,
         type = 'DashParticles',
         namespace = 'dash_particles',
-        propNames = c('id', 'className', 'height', 'options', 'particlesLoaded', 'style', 'width'),
+        propNames = c('id', 'className', 'height', 'options', 'particlesLoaded', 'runtime', 'style', 'width'),
         package = 'dashParticles'
         )
 

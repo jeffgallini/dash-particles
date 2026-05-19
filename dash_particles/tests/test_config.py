@@ -272,6 +272,12 @@ def test_dash_particles_default_to_embedded_canvas_mode():
     assert component.options["particles"]["number"]["value"] == 12
 
 
+def test_dash_particles_accepts_runtime_tier_override():
+    component = dp.DashParticles(id="particles", runtime="basic")
+
+    assert component.runtime == "basic"
+
+
 def test_presets_are_available_from_top_level_package():
     stars = dp.presets.stars().to_dict()
     among_us = dp.presets.among_us().to_dict()

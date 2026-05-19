@@ -33,7 +33,7 @@ def _official_example(
     config,
     description,
     official_url,
-    support="Works with the current full runtime",
+    support="Works with auto runtime selection",
     source="Official sample inspired",
 ):
     return {
@@ -52,7 +52,7 @@ def _built_in_preset(name):
         "config": dp.presets.PRESET_BUILDERS[name](),
         "description": dp.presets.PRESET_DESCRIPTIONS[name],
         "official_url": None,
-        "support": "Works with the current full runtime",
+        "support": "Works with auto runtime selection",
         "source": "Built-in preset",
     }
 
@@ -69,7 +69,7 @@ example_catalog = {
         dp.presets.among_us(),
         dp.presets.PRESET_DESCRIPTIONS["among_us"],
         "https://particles.js.org/samples/index.html#amongUs",
-        support="Works with the current full runtime, including emitter support",
+        support="Auto runtime selection loads the full tier for emitter support",
     ),
     "multiple_images": _official_example(
         dp.presets.PRESET_LABELS["multiple_images"],
@@ -82,21 +82,21 @@ example_catalog = {
         dp.presets.parallax(),
         dp.presets.PRESET_DESCRIPTIONS["parallax"],
         "https://particles.js.org/samples/index.html#parallax",
-        support="Works with the current full runtime",
+        support="Auto runtime selection loads the slim tier for parallax interactivity",
     ),
     "fontawesome": _official_example(
         dp.presets.PRESET_LABELS["fontawesome"],
         dp.presets.fontawesome(),
         dp.presets.PRESET_DESCRIPTIONS["fontawesome"],
         "https://particles.js.org/samples/index.html#fontawesome",
-        support="Works with the current full runtime, and this demo loads the Font Awesome stylesheet for you",
+        support="Auto runtime selection loads the full tier; this demo loads the Font Awesome stylesheet for you",
     ),
     "blurred_particles": _official_example(
         dp.presets.PRESET_LABELS["blurred_particles"],
         dp.presets.blurred_particles(),
         dp.presets.PRESET_DESCRIPTIONS["blurred_particles"],
         "https://codepen.io/matteobruni/pen/qBPxjQY",
-        support="Works with the current full runtime, including emitters and theme switching",
+        support="Auto runtime selection loads the full tier for emitters and theme switching",
         source="CodePen inspired",
     ),
     "hypno_squares": _official_example(
@@ -104,7 +104,7 @@ example_catalog = {
         dp.presets.hypno_squares(),
         dp.presets.PRESET_DESCRIPTIONS["hypno_squares"],
         "https://codepen.io/matteobruni/pen/BaGbWdb",
-        support="Works with the current full runtime, including size and rotate animations",
+        support="Auto runtime selection loads the full tier for emitter-driven animations",
         source="CodePen inspired",
     ),
 }
@@ -255,6 +255,10 @@ CONTROL_HINT_STYLE = {
 }
 
 CONTROL_BLOCK_STYLE = {"marginBottom": "18px"}
+SELECT_STYLE = {
+    "width": "100%",
+    "color": "#0f172a",
+}
 
 
 def _control_block(label, hint, control):
@@ -265,6 +269,16 @@ def _control_block(label, hint, control):
             control,
         ],
         style=CONTROL_BLOCK_STYLE,
+    )
+
+
+def _dropdown_selector(component_id, options, value):
+    return dcc.Dropdown(
+        id=component_id,
+        options=options,
+        value=value,
+        clearable=False,
+        style=SELECT_STYLE,
     )
 
 
@@ -641,7 +655,7 @@ def _load_example_payload(example_name):
 
 def _build_preview_component(config):
     return dp.DashParticles(
-        id=f"particles-preview-{_config_fingerprint(config)}",
+        id="particles-preview",
         config=config,
         full_screen=dp.FullScreen(enable=False, z_index=0),
         height="100%",
@@ -650,11 +664,18 @@ def _build_preview_component(config):
     )
 
 
+DEFAULT_EXAMPLE_NAME = "default"
+DEFAULT_CONFIG = _deepcopy_config(particle_configs[DEFAULT_EXAMPLE_NAME])
+DEFAULT_EDITOR_STATE = extract_editor_state(DEFAULT_CONFIG)
+DEFAULT_CONFIG_JSON = json.dumps(DEFAULT_CONFIG, indent=2)
+DEFAULT_PYTHON_CONFIG = format_python_config(DEFAULT_CONFIG)
+
+
 app = dash.Dash(__name__, external_stylesheets=[FONT_AWESOME_STYLESHEET])
 
 app.layout = html.Div(
     [
-        dcc.Store(id="current-config", data=_deepcopy_config(particle_configs["default"])),
+        dcc.Store(id="current-config", data=_deepcopy_config(DEFAULT_CONFIG)),
         html.Div(
             [
                 html.H1("Dash Particles Helper"),
@@ -675,11 +696,12 @@ app.layout = html.Div(
                     [
                         html.Div(
                             id="particles-preview-slot",
-                            children=_build_preview_component(_deepcopy_config(particle_configs["default"])),
+                            children=_build_preview_component(_deepcopy_config(DEFAULT_CONFIG)),
                             style={"position": "absolute", "inset": 0, "zIndex": 0},
                         ),
                         html.Div(
                             id="example-summary",
+                            children=_build_example_summary(DEFAULT_EXAMPLE_NAME),
                             style={
                                 "position": "relative",
                                 "zIndex": 1,
@@ -707,14 +729,13 @@ app.layout = html.Div(
                         html.Div(
                             [
                                 html.H3("Example"),
-                                dcc.Dropdown(
-                                    id="example-dropdown",
-                                    options=[
+                                _dropdown_selector(
+                                    "example-dropdown",
+                                    [
                                         {"label": metadata["label"], "value": key}
                                         for key, metadata in example_catalog.items()
                                     ],
-                                    value="default",
-                                    clearable=False,
+                                    DEFAULT_EXAMPLE_NAME,
                                 ),
                                 html.Button(
                                     "Reset To Example",
@@ -742,6 +763,7 @@ app.layout = html.Div(
                                     type="text",
                                     debounce=True,
                                     placeholder=", ".join(COLOR_SUGGESTIONS[:3]),
+                                    value=DEFAULT_EDITOR_STATE["background_color"],
                                     style={"width": "100%"},
                                 ),
                                 html.Label("Particle Color", style={"marginTop": "12px"}),
@@ -750,6 +772,7 @@ app.layout = html.Div(
                                     type="text",
                                     debounce=True,
                                     placeholder=", ".join(COLOR_SUGGESTIONS[3:6]),
+                                    value=DEFAULT_EDITOR_STATE["particle_color"],
                                     style={"width": "100%"},
                                 ),
                                 html.Label("Link Color", style={"marginTop": "12px"}),
@@ -758,16 +781,45 @@ app.layout = html.Div(
                                     type="text",
                                     debounce=True,
                                     placeholder=", ".join(COLOR_SUGGESTIONS[6:9]),
+                                    value=DEFAULT_EDITOR_STATE["link_color"],
                                     style={"width": "100%"},
                                 ),
                                 html.Label("Particle Count", style={"marginTop": "14px"}),
-                                dcc.Slider(id="particle-count", min=0, max=240, step=4, marks={0: "0", 80: "80", 160: "160", 240: "240"}),
+                                dcc.Slider(
+                                    id="particle-count",
+                                    min=0,
+                                    max=240,
+                                    step=4,
+                                    marks={0: "0", 80: "80", 160: "160", 240: "240"},
+                                    value=DEFAULT_EDITOR_STATE["particle_count"],
+                                ),
                                 html.Label("Particle Size", style={"marginTop": "14px"}),
-                                dcc.Slider(id="particle-size", min=1, max=40, step=1, marks={1: "1", 20: "20", 40: "40"}),
+                                dcc.Slider(
+                                    id="particle-size",
+                                    min=1,
+                                    max=40,
+                                    step=1,
+                                    marks={1: "1", 20: "20", 40: "40"},
+                                    value=DEFAULT_EDITOR_STATE["particle_size"],
+                                ),
                                 html.Label("Opacity", style={"marginTop": "14px"}),
-                                dcc.Slider(id="particle-opacity", min=0.1, max=1, step=0.05, marks={0.1: "0.1", 0.5: "0.5", 1: "1.0"}),
+                                dcc.Slider(
+                                    id="particle-opacity",
+                                    min=0.1,
+                                    max=1,
+                                    step=0.05,
+                                    marks={0.1: "0.1", 0.5: "0.5", 1: "1.0"},
+                                    value=DEFAULT_EDITOR_STATE["particle_opacity"],
+                                ),
                                 html.Label("Speed", style={"marginTop": "14px"}),
-                                dcc.Slider(id="move-speed", min=0, max=8, step=0.1, marks={0: "0", 2: "2", 4: "4", 8: "8"}),
+                                dcc.Slider(
+                                    id="move-speed",
+                                    min=0,
+                                    max=8,
+                                    step=0.1,
+                                    marks={0: "0", 2: "2", 4: "4", 8: "8"},
+                                    value=DEFAULT_EDITOR_STATE["move_speed"],
+                                ),
                                 html.Label("Links", style={"marginTop": "14px"}),
                                 dcc.RadioItems(
                                     id="links-enabled",
@@ -776,11 +828,20 @@ app.layout = html.Div(
                                         {"label": "Disabled", "value": False},
                                     ],
                                     inline=True,
+                                    value=DEFAULT_EDITOR_STATE["links_enabled"],
                                 ),
                                 html.Label("Hover Mode", style={"marginTop": "14px"}),
-                                dcc.Dropdown(id="hover-mode", options=HOVER_MODE_OPTIONS, clearable=False),
+                                _dropdown_selector(
+                                    "hover-mode",
+                                    HOVER_MODE_OPTIONS,
+                                    DEFAULT_EDITOR_STATE["hover_mode"],
+                                ),
                                 html.Label("Click Mode", style={"marginTop": "14px"}),
-                                dcc.Dropdown(id="click-mode", options=CLICK_MODE_OPTIONS, clearable=False),
+                                _dropdown_selector(
+                                    "click-mode",
+                                    CLICK_MODE_OPTIONS,
+                                    DEFAULT_EDITOR_STATE["click_mode"],
+                                ),
                                 html.Button(
                                     "Apply Quick Tweaks",
                                     id="apply-controls",
@@ -807,6 +868,7 @@ app.layout = html.Div(
                                 ),
                                 dcc.Textarea(
                                     id="config-json",
+                                    value=DEFAULT_CONFIG_JSON,
                                     style={"width": "100%", "height": "260px", "fontFamily": "monospace"},
                                 ),
                                 html.Div(
@@ -851,6 +913,7 @@ app.layout = html.Div(
                                 dcc.Textarea(
                                     id="python-config-output",
                                     readOnly=True,
+                                    value=DEFAULT_PYTHON_CONFIG,
                                     style={"width": "100%", "height": "260px", "fontFamily": "monospace"},
                                 ),
                             ],
@@ -866,6 +929,7 @@ app.layout = html.Div(
                                         dcc.Textarea(
                                             id="export-code-output",
                                             readOnly=True,
+                                            value="",
                                             style={"width": "100%", "height": "220px", "fontFamily": "monospace"},
                                         )
                                     ],
@@ -914,6 +978,7 @@ app.layout = html.Div(
     Output("json-status", "children"),
     Input("example-dropdown", "value"),
     Input("reset-example", "n_clicks"),
+    prevent_initial_call=True,
 )
 def load_example(example_name, _reset_clicks):
     return _load_example_payload(example_name)
@@ -923,6 +988,7 @@ def load_example(example_name, _reset_clicks):
     Output("particles-preview-slot", "children"),
     Output("python-config-output", "value"),
     Input("current-config", "data"),
+    prevent_initial_call=True,
 )
 def render_preview(current_config):
     return (
@@ -985,26 +1051,6 @@ def apply_controls(
 @app.callback(
     Output("current-config", "data", allow_duplicate=True),
     Output("json-status", "children", allow_duplicate=True),
-    Input("apply-json", "n_clicks"),
-    State("config-json", "value"),
-    prevent_initial_call=True,
-)
-def apply_json_editor(n_clicks, config_text):
-    if n_clicks <= 0:
-        return no_update, no_update
-
-    try:
-        parsed = json.loads(config_text)
-    except json.JSONDecodeError as error:
-        return no_update, f"JSON error: {error.msg} (line {error.lineno}, column {error.colno})"
-
-    if not isinstance(parsed, dict):
-        return no_update, "The JSON editor expects a single config object at the top level."
-
-    return parsed, "JSON config applied."
-
-
-@app.callback(
     Output("background-color", "value", allow_duplicate=True),
     Output("particle-color", "value", allow_duplicate=True),
     Output("link-color", "value", allow_duplicate=True),
@@ -1015,12 +1061,34 @@ def apply_json_editor(n_clicks, config_text):
     Output("links-enabled", "value", allow_duplicate=True),
     Output("hover-mode", "value", allow_duplicate=True),
     Output("click-mode", "value", allow_duplicate=True),
-    Input("current-config", "data"),
+    Input("apply-json", "n_clicks"),
+    State("config-json", "value"),
     prevent_initial_call=True,
 )
-def sync_controls_from_config(current_config):
-    state = extract_editor_state(current_config)
+def apply_json_editor(n_clicks, config_text):
+    if n_clicks <= 0:
+        return (no_update,) * 12
+
+    try:
+        parsed = json.loads(config_text)
+    except json.JSONDecodeError as error:
+        return (
+            no_update,
+            f"JSON error: {error.msg} (line {error.lineno}, column {error.colno})",
+            *(no_update,) * 10,
+        )
+
+    if not isinstance(parsed, dict):
+        return (
+            no_update,
+            "The JSON editor expects a single config object at the top level.",
+            *(no_update,) * 10,
+        )
+
+    state = extract_editor_state(parsed)
     return (
+        parsed,
+        "JSON config applied.",
         state["background_color"],
         state["particle_color"],
         state["link_color"],
@@ -1046,4 +1114,4 @@ def handle_export_config(n_clicks, current_config_data):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port =3746)

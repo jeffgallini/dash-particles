@@ -12,6 +12,7 @@ This documentation set is aimed at Python and Dash users first.
 
 ## Release Notes
 
+- [v1.0.0](releases/v1.0.0.md): stable Python package release with structured config, presets, runtime auto-loading, and refreshed docs
 - [v0.0.2](releases/v0.0.2.md): structured Python config API, presets, docs refresh, and compatibility notes for existing dict-based apps
 
 ## Recommended Reading Order

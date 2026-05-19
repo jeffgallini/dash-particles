@@ -107,12 +107,15 @@ Use `extra` when:
 
 ## Runtime Support Boundary
 
-The current frontend loads the `tsparticles` full bundle.
+The frontend auto-selects between packaged basic, slim, and full tsParticles
+runtime tiers. Simple configs stay on lighter tiers; configs that need emitters,
+text or character particles, canvas masks, or click-pop interactions load the
+full tier on demand.
 
-- Many common features work directly with the shipped bundle.
-- Emitters, background masks, themeable blur effects, animated geometric effects, and text or character-based particles are included in the shipped runtime.
-- `extra` can set keys for features inside that bundle, even if the Python helper is missing.
-- `extra` does not load missing JavaScript plugins.
+- Many common features work directly with auto runtime selection.
+- Emitters, background masks, themeable blur effects, animated geometric effects, and text or character-based particles are included in the packaged full tier.
+- `extra` can set keys for features inside the packaged tiers, even if the Python helper is missing.
+- `extra` does not load JavaScript plugins outside the package.
 - Features outside the documented presets may still need the frontend runtime expanded before they will work in the browser.
 
 If you need those features today, treat it as a frontend-bundle task, not just a Python-API task.
